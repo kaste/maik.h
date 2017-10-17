@@ -1,3 +1,5 @@
+import majinbuu from './node_modules/majinbuu/index.js';
+
 var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   /*! (c) 2017 Andrea Giammarchi @WebReflection, (ISC) */
@@ -1392,7 +1394,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // ---------------------------------------------
   return hyper;
 
-}(document/*!majinbuu*/));
+}(document, majinbuu));
 
-// umd.KISS
-try { module.exports = hyperHTML; } catch(o_O) {}
+export default hyperHTML;
