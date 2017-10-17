@@ -6,10 +6,14 @@
   "homepage": "https://viperhtml.js.org/hyper.html",
   "main": "index.js",
   "scripts": {
-    "build": "node bundler.js dependencies && npm run minify && node bundler.js && npm run ie && npm test && npm run size",
+    "build": "rollup -c",
+    "postbuild": "npm run minify",
+
+    "dev": "rollup -c -w",
+
     "coveralls": "cat ./coverage/lcov.info | coveralls",
     "ie": "babel ./test/test.js --out-dir ./test/ie --presets=es2015",
-    "minify": "uglifyjs index.js --comments=/^!/ --compress --mangle -o min.js",
+    "minify": "uglifyjs index.js --comments=\"/^!/\" --compress --mangle -o min.js",
     "size": "cat index.js | wc -c;cat min.js | wc -c;gzip -c min.js | wc -c",
     "test": "istanbul cover test/runner.js"
   },
