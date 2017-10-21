@@ -774,7 +774,8 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   var transformersKeys = [];
 
   // normalize Firefox issue with template literals
-  var templateObjects = {}, unique;
+  var templateObjects = {};
+
   function unique(template) {
     var key = '_' + template.join(UIDC);
     return templateObjects[key] ||
