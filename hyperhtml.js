@@ -262,11 +262,12 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   function setAnyContent(node, childNodes, aura) {
     var oldValue;
     return function anyContent(value) {
+      var length;
       switch (typeof value) {
         case 'string':
         case 'number':
         case 'boolean':
-          var length = childNodes.length;
+          length = childNodes.length;
           if (
             length === 1 &&
             childNodes[0].nodeType === TEXT_NODE
@@ -301,7 +302,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         default:
           oldValue = value;
           if (isArray(value)) {
-            var length = value.length;
+            length = value.length;
             if (length === 0) {
               aura.splice(0);
             } else {
@@ -577,14 +578,15 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   // create a fragment for SVG
   function createSVGFragment(node, html) {
+    var container;
     var document = node.ownerDocument;
     var fragment = createDocumentFragment(document);
     if (IE || WK) {
-      var container = document.createElement('div');
+      container = document.createElement('div');
       container.innerHTML = '<svg xmlns="' + SVG_NAMESPACE + '">' + html + '</svg>';
       appendNodes(fragment, slice.call(container.firstChild.childNodes));
     } else {
-      var container = document.createElementNS(SVG_NAMESPACE, 'svg');
+      container = document.createElementNS(SVG_NAMESPACE, 'svg');
       container.innerHTML = html;
       appendNodes(fragment, slice.call(container.childNodes));
     }
@@ -892,6 +894,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // IE/Edge gotcha with comment nodes
   var nextElementSibling = IE ?
     function (node) {
+      // eslint-disable-next-line no-cond-assign
       while (node = node.nextSibling) {
         if (node.nodeType === ELEMENT_NODE) return node;
       }
@@ -901,6 +904,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   var previousElementSibling = IE ?
     function (node) {
+      // eslint-disable-next-line no-cond-assign
       while (node = node.previousSibling) {
        if (node.nodeType === ELEMENT_NODE) return node;
       }
@@ -958,15 +962,16 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
             // `${'virtual'}` is actually resolved as `${'any'}`
             // case before < 0 && after < 0: before = 0;
 
-            // `</a>${'virtual'}`
             case after < 0:
+            // `</a>${'virtual'}`
               after = children.length;
               break;
-            // `${'virtual'}<b>`
             case before < 0:
+            // `${'virtual'}<b>`
               before = 0;
-            // `</a>${'virtual'}<b>`
+              /* fallthrough */
             default:
+            // `</a>${'virtual'}<b>`
               after = -(virtualChildren.length - after);
               break;
           }
@@ -1069,6 +1074,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     }
     for (
       node = parentNode;
+      // eslint-disable-next-line no-cond-assign
       parentNode = parentNode.parentNode;
       node = parentNode
     ) {
