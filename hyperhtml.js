@@ -218,7 +218,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       type = isEvent ? name.slice(2) : '',
       noOwner = isSpecial || isEvent,
       wontUpgrade = isSpecial && (isData || name in node),
-      oldValue, specialAttr
+      oldValue
     ;
     if (isEvent || wontUpgrade) {
       removeAttributes.push(node, name);
@@ -228,61 +228,60 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         }
       }
     }
-    if (isSpecial) {
-      specialAttr = function specialAttr(newValue) {
-        if (oldValue !== newValue) {
-          oldValue = newValue;
-          // WebKit moves the cursor if input.value
-          // is set again, even if same value
-          if (node[name] !== newValue) {
-            // let the browser handle the case
-            // input.value = null;
-            // input.value; // ''
-            if (newValue == null) {
-              // reflect the null intent,
-              // do not pass undefined!
-              node[name] = null;
-              node.removeAttribute(name);
-            } else {
-              node[name] = newValue;
-            }
+    function specialAttr(newValue) {
+      if (oldValue !== newValue) {
+        oldValue = newValue;
+        // WebKit moves the cursor if input.value
+        // is set again, even if same value
+        if (node[name] !== newValue) {
+          // let the browser handle the case
+          // input.value = null;
+          // input.value; // ''
+          if (newValue == null) {
+            // reflect the null intent,
+            // do not pass undefined!
+            node[name] = null;
+            node.removeAttribute(name);
+          } else {
+            node[name] = newValue;
           }
         }
-      };
+      }
     }
-    return isEvent ?
-      function eventAttr(newValue) {
-        if (oldValue !== newValue) {
-          if (oldValue) node.removeEventListener(type, oldValue, false);
-          oldValue = newValue;
-          if (newValue) node.addEventListener(type, newValue, false);
-        }
-      } :
-      (isSpecial ?
-        specialAttr :
-        function normalAttr(newValue) {
-          if (oldValue !== newValue) {
-            oldValue = newValue;
-            // avoid triggering again attributeChangeCallback
-            // if the value was identical
-            if (attribute.value !== newValue) {
-              if (newValue == null) {
-                if (!noOwner) {
-                  // TODO: should attribute.value = null here?
-                  noOwner = true;
-                  node.removeAttributeNode(attribute);
-                }
-              } else {
-                attribute.value = newValue;
-                if (noOwner) {
-                  noOwner = false;
-                  node.setAttributeNode(attribute);
-                }
-              }
+    function eventAttr(newValue) {
+      if (oldValue !== newValue) {
+        if (oldValue) node.removeEventListener(type, oldValue, false);
+        oldValue = newValue;
+        if (newValue) node.addEventListener(type, newValue, false);
+      }
+    }
+    function normalAttr(newValue) {
+      if (oldValue !== newValue) {
+        oldValue = newValue;
+        // avoid triggering again attributeChangeCallback
+        // if the value was identical
+        if (attribute.value !== newValue) {
+          if (newValue == null) {
+            if (!noOwner) {
+              // TODO: should attribute.value = null here?
+              noOwner = true;
+              node.removeAttributeNode(attribute);
+            }
+          } else {
+            attribute.value = newValue;
+            if (noOwner) {
+              noOwner = false;
+              node.setAttributeNode(attribute);
             }
           }
         }
-      );
+      }
+    }
+    return isEvent
+      ? eventAttr
+      : isSpecial
+        ? specialAttr
+        : normalAttr;
   }
 
   // `<style>${'text'}</style>`
