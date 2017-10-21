@@ -672,43 +672,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     return node.ownerDocument.createTextNode(text);
   }
 
-  // dispatch same event through a list of nodes
-  function dispatchAll(nodes, type) {
-    for (var
-      e, node,
-      isConnected = type === CONNECTED,
-      i = 0, length = nodes.length;
-      i < length; i++
-    ) {
-      node = nodes[i];
-      /* istanbul ignore else */
-      if (node.nodeType === ELEMENT_NODE) {
-        e = dispatchTarget(node, isConnected, type, e);
-      }
-    }
-  }
-
-  // per each inserted element, check initialization
-  function dispatchTarget(node, isConnected, type, e) {
-    /* istanbul ignore next */
-    if (components.has(node)) {
-      node.dispatchEvent(e || (e = new $Event(type)));
-    }
-    else if (isConnected && toBeUpgraded.has(node)) {
-      toBeUpgraded.get(node).$();
-    }
-    else {
-      for (var
-        nodes = getChildren(node),
-        i = 0, length = nodes.length;
-        i < length; i++
-      ) {
-        e = dispatchTarget(nodes[i], isConnected, type, e);
-      }
-    }
-    return e;
-  }
-
   // returns current customElements reference
   // compatible with basicHTML too
   function getCEClass(node) {
@@ -827,35 +790,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   var CONNECTED = 'connected';
   var DISCONNECTED = 'dis' + CONNECTED;
-  var $Event;
-
-  try {
-    new Event(CONNECTED);
-    $Event = Event;
-  } catch(o_O) {
-    $Event = function (type) {
-      var e = hyper.document.createEvent('Event');
-      e.initEvent(type, false, false);
-      return e;
-    };
-  }
-
-  try {
-    (new MutationObserver(function (records) {
-      for (var record, i = 0, length = records.length; i < length; i++) {
-        record = records[i];
-        dispatchAll(record.removedNodes, DISCONNECTED);
-        dispatchAll(record.addedNodes, CONNECTED);
-      }
-    })).observe(globalDocument, {subtree: true, childList: true});
-  } catch(o_O) {
-    globalDocument.addEventListener('DOMNodeInserted', function (e) {
-      dispatchAll([e.target], CONNECTED);
-    }, false);
-    globalDocument.addEventListener('DOMNodeRemoved', function (e) {
-      dispatchAll([e.target], DISCONNECTED);
-    }, false);
-  }
 
   // WeakMap with partial UID fallback
   var $WeakMap = typeof WeakMap === typeof $WeakMap ?
