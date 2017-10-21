@@ -217,10 +217,9 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
                   !SHOULD_USE_ATTRIBUTE.test(name)),
       type = isEvent ? name.slice(2) : '',
       noOwner = isSpecial || isEvent,
-      wontUpgrade = isSpecial && (isData || name in node),
       oldValue
     ;
-    if (isEvent || wontUpgrade) {
+    if (isEvent || isSpecial) {
       removeAttributes.push(node, name);
       if (isEvent) {
         if (name.toLowerCase() in node) {
