@@ -240,8 +240,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
           if (newValue == null) {
             // reflect the null intent,
             // do not pass undefined!
-            node[name] = null;
-            node.removeAttribute(name);
+            node[name] = '';
           } else {
             node[name] = newValue;
           }

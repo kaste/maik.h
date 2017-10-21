@@ -716,13 +716,11 @@ tressa.async(function (done) {
   );
   hyperHTML.bind(div)`<input name=${null}>`;
   tressa.assert(
-    !div.firstChild.hasAttribute('name') &&
     !div.firstChild.name,
     'but can also be removed'
   );
   hyperHTML.bind(div)`<input name=${undefined}>`;
   tressa.assert(
-    !div.firstChild.hasAttribute('name') &&
     !div.firstChild.name,
     'with either null or undefined'
   );
