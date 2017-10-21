@@ -77,44 +77,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       );
   }
 
-  // hyper.Component([initialState]) 🍻
-  // An overly-simplified Component class.
-  // For full Custom Elements support
-  // see HyperHTMLElement instead.
-  hyper.Component = Component;
-  function Component() {}
-  Object.defineProperties(
-    Component.prototype,
-    {
-      // same as HyperHTMLElement handleEvent
-      handleEvent: {value: function (e) {
-        // both IE < 11 and JSDOM lack dataset
-        var ct = e.currentTarget;
-        this[
-          ('getAttribute' in ct && ct.getAttribute('data-call')) ||
-          ('on' + e.type)
-        ](e);
-      }},
-      // returns its own HTML wire or create it once on comp.render()
-      html: lazyGetter('html', wireContent),
-      // returns its own SVG wire or create it once on comp.render()
-      svg: lazyGetter('svg', wireContent),
-      // same as HyperHTMLElement state
-      state: lazyGetter('state', function () { return this.defaultState; }),
-      // same as HyperHTMLElement get defaultState
-      defaultState: {get: function () { return {}; }},
-      // same as HyperHTMLElement setState
-      setState: {value: function (state) {
-        var target = this.state;
-        var source = typeof state === 'function' ? state.call(this, target) : state;
-        for (var key in source) target[key] = source[key];
-        this.render();
-      }}
-      // the render must be defined when extending hyper.Component
-      // the render **must** return either comp.html or comp.svg wire
-      // render() { return this.html`<p>that's it</p>`; }
-    }
-  );
 
   // - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -334,9 +296,8 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
             oldValue = value;
             anyContent('');
             break;
-          } else if (value instanceof Component) {
-            value = value.render();
           }
+          /* fallthrough */
         default:
           oldValue = value;
           if (isArray(value)) {
@@ -364,13 +325,8 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
                   if (isPromise_ish(value[0])) {
                     Promise.all(value).then(anyContent);
                     break;
-                  } else {
-                    for (var i = 0, length = value.length; i < length; i++) {
-                      if (value[i] instanceof Component) {
-                        value[i] = value[i].render();
-                      }
-                    }
                   }
+                  /* fallthrough */
                 default:
                   optimist(aura, value);
                   break;
@@ -693,20 +649,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     return value != null && 'then' in value;
   }
 
-  // return a descriptor that lazily initialize a property
-  // unless it hasn't be previously set directly
-  function lazyGetter(type, fn) {
-    var secret = '_' + type + '$';
-    return {
-      get: function () {
-        return this[secret] || (this[type] = fn.call(this, type));
-      },
-      set: function (value) {
-        defineProperty(this, secret, {configurable: true, value: value});
-      }
-    };
-  }
-
   // uses majinbuu only if the two lists are different
   function optimist(aura, value) {
     var i = 0, length = aura.length;
@@ -826,9 +768,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // ---------------------------------------------
   // Shared variables
   // ---------------------------------------------
-
-  // recycled defineProperty shortcut
-  var defineProperty = Object.defineProperty;
 
   // transformers registry
   var transformers = {};
