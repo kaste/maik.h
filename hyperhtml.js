@@ -223,10 +223,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     if (isEvent || wontUpgrade) {
       removeAttributes.push(node, name);
       if (isEvent) {
-        if (type === CONNECTED || type === DISCONNECTED) {
-          components.add(node);
-        }
-        else if (name.toLowerCase() in node) {
+        if (name.toLowerCase() in node) {
           type = type.toLowerCase();
         }
       }
@@ -788,9 +785,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // Hybrid Shims
   // ---------------------------------------------
 
-  var CONNECTED = 'connected';
-  var DISCONNECTED = 'dis' + CONNECTED;
-
   // WeakMap with partial UID fallback
   var $WeakMap = typeof WeakMap === typeof $WeakMap ?
       function () {
@@ -945,9 +939,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   var replaceAttributes = function ($0, $1, $2) {
     return $1 + ($2 || '"') + UID + ($2 || '"');
   };
-
-  // list of components with connected/disconnected
-  var components = new $WeakSet;
 
   // [element] = {template, updates};
   var hypers = new $WeakMap;
