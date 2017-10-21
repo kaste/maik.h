@@ -841,7 +841,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   // sanitizes interpolations as comments
   var attrName = '[^\\S]+[^ \\f\\n\\r\\t\\/>"\'=]+';
-  var no = new RegExp('(<[a-z]+[a-z0-9:_-]*)((?:' + attrName + '(?:=(?:\'.*?\'|".*?"|<.+?>|\\S+))?)+)([^\\S]*\/?>)', 'gi');
+  var no = new RegExp('(<[a-z]+[a-z0-9:_-]*)((?:' + attrName + '(?:=(?:\'.*?\'|".*?"|<.+?>|\\S+))?)+)([^\\S]*/?>)', 'gi');
   var findAttributes = new RegExp('(' + attrName + '=)([\'"]?)' + UIDC + '\\2', 'gi');
   var comments = function ($0, $1, $2, $3) {
     return $1 + $2.replace(findAttributes, replaceAttributes) + $3;
