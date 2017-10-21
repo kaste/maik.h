@@ -221,12 +221,11 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     ;
     if (isEvent || isSpecial) {
       removeAttributes.push(node, name);
-      if (isEvent) {
-        if (name.toLowerCase() in node) {
-          type = type.toLowerCase();
-        }
-      }
     }
+    if (isEvent && name.toLowerCase() in node) {
+      type = type.toLowerCase();
+    }
+
     function specialAttr(newValue) {
       if (oldValue !== newValue) {
         oldValue = newValue;
@@ -246,6 +245,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         }
       }
     }
+
     function eventAttr(newValue) {
       if (oldValue !== newValue) {
         if (oldValue) node.removeEventListener(type, oldValue, false);
@@ -253,6 +253,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         if (newValue) node.addEventListener(type, newValue, false);
       }
     }
+
     function normalAttr(newValue) {
       if (oldValue !== newValue) {
         oldValue = newValue;
@@ -275,6 +276,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         }
       }
     }
+
     return isEvent
       ? eventAttr
       : isSpecial
