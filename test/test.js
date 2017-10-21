@@ -847,49 +847,6 @@ tressa.async(function (done) {
     (new GlobalEvent).render().dispatchEvent(e);
   });
 })
-.then(function () { return tressa.async(function (done) {
-  tressa.log('## Custom Element attributes');
-  var global = document.defaultView;
-  var registry = global.customElements;
-  var customElements = {
-    _: Object.create(null),
-    define: function (name, Class) {
-      this._[name.toLowerCase()] = Class;
-    },
-    get: function (name) {
-      return this._[name.toLowerCase()];
-    }
-  };
-  Object.defineProperty(global, 'customElements', {
-    configurable: true,
-    value: customElements
-  });
-  function DumbElement() {}
-  DumbElement.prototype.dumb = null;
-  DumbElement.prototype.asd = null;
-  customElements.define('dumb-element', DumbElement);
-  function update(wire) {
-    return wire`<div>
-      <dumb-element dumb=${true} asd=${'qwe'}></dumb-element><dumber-element dumb=${true}></dumber-element>
-    </div>`;
-  }
-  var wire = hyperHTML.wire();
-  var div = update(wire);
-  if (!(div.firstElementChild instanceof DumbElement)) {
-    tressa.assert(div.firstElementChild.dumb !== true, 'not upgraded elements does not have special attributes');
-    tressa.assert(div.lastElementChild.dumb !== true, 'unknown elements never have special attributes');
-    // simulate an upgrade
-    div.firstElementChild.constructor.prototype.dumb = null;
-  }
-  update(wire);
-  delete div.firstElementChild.constructor.prototype.dumb;
-  tressa.assert(div.firstElementChild.dumb === true, 'upgraded elements have special attributes');
-  Object.defineProperty(global, 'customElements', {
-    configurable: true,
-    value: registry
-  });
-  done();
-}); })
 .then(function () {
   tressa.log('## hyper.Component state');
   class DefaultState extends hyperHTML.Component {

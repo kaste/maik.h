@@ -218,7 +218,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       type = isEvent ? name.slice(2) : '',
       noOwner = isSpecial || isEvent,
       wontUpgrade = isSpecial && (isData || name in node),
-      oldValue, specialAttr, upgrade
+      oldValue, specialAttr
     ;
     if (isEvent || wontUpgrade) {
       removeAttributes.push(node, name);
@@ -229,52 +229,24 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       }
     }
     if (isSpecial) {
-      if (!wontUpgrade) {
-        upgrade = toBeUpgraded.get(node);
-        if (!upgrade) {
-          upgrade = {
-            _: Object.create(null),
-            $: function () {
-              toBeUpgraded.delete(node);
-              for (var name in this._) {
-                this._[name].$();
-              }
-            }
-          };
-          toBeUpgraded.set(node, upgrade);
-        }
-        upgrade._[name] = {
-          _: null,
-          $: function () {
-            wontUpgrade = true;
-            specialAttr(this._);
-          }
-        };
-      }
       specialAttr = function specialAttr(newValue) {
-        if (wontUpgrade) {
-          if (oldValue !== newValue) {
-            oldValue = newValue;
-            // WebKit moves the cursor if input.value
-            // is set again, even if same value
-            if (node[name] !== newValue) {
-              // let the browser handle the case
-              // input.value = null;
-              // input.value; // ''
-              if (newValue == null) {
-                // reflect the null intent,
-                // do not pass undefined!
-                node[name] = null;
-                node.removeAttribute(name);
-              } else {
-                node[name] = newValue;
-              }
+        if (oldValue !== newValue) {
+          oldValue = newValue;
+          // WebKit moves the cursor if input.value
+          // is set again, even if same value
+          if (node[name] !== newValue) {
+            // let the browser handle the case
+            // input.value = null;
+            // input.value; // ''
+            if (newValue == null) {
+              // reflect the null intent,
+              // do not pass undefined!
+              node[name] = null;
+              node.removeAttribute(name);
+            } else {
+              node[name] = newValue;
             }
           }
-        } else {
-          attribute.value = newValue;
-          upgrade._[name]._ = newValue;
-          if (name in node) upgrade.$();
         }
       };
     }
@@ -948,9 +920,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   // [template] = {fragment, paths};
   var templates = new $Map;
-
-  // [node] = onupgrade
-  var toBeUpgraded = new $WeakMap;
 
   // internal signal to switch adoption
   var notAdopting = true;
