@@ -1,0 +1,13 @@
+diff --git a/node_modules/majinbuu/esm/main.js b/node_modules/majinbuu/esm/main.js
+index f302eca..2ed2d86 100644
+--- a/node_modules/majinbuu/esm/main.js
++++ b/node_modules/majinbuu/esm/main.js
+@@ -6,7 +6,7 @@ const INSERT = 'ins';
+ const SUBSTITUTE = 'sub';
+ 
+ // typed Array
+-const TypedArray = global.Int32Array || Array;
++const TypedArray = self.Int32Array || Array;
+ 
+ const majinbuu = (from, to, MAX_SIZE) => {
+ 
