@@ -2217,9 +2217,9 @@ lru-cache@^4.0.1:
     pseudomap "^1.0.2"
     yallist "^2.1.2"
 
-majinbuu@^0.4.3:
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/majinbuu/-/majinbuu-0.4.3.tgz#5c9cf5618847c1b160096bff52f1aba362543aea"
+majinbuu@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/majinbuu/-/majinbuu-1.1.0.tgz#34666f00a31549734fa7d864789a73e037233d9c"
 
 media-typer@0.3.0:
   version "0.3.0"
