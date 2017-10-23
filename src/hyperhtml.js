@@ -1236,3 +1236,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 }(document, majinbuu));
 
 export default hyperHTML;
+
+const {bind} = hyperHTML;
+export {bind};
