@@ -1,3 +1,5 @@
+/* eslint semi: [1, 'always'] */
+/* global tressa, hyperHTML */
 var SKIP_ADOPT = typeof location !== typeof SKIP_ADOPT && -1 < location.search.indexOf('noadopt');
 
 tressa.title('HyperHTML');
@@ -21,7 +23,7 @@ tressa.async(function (done) {
   var render = hyperHTML.bind(div);
   function update(i) {
     return render`
-    <p data-counter="${i}">
+    <p data-counter$="${i}">
       Time: ${
         // IE Edge mobile did something funny here
         // as template string returned xxx.xxxx
@@ -136,9 +138,9 @@ tressa.async(function (done) {
     tressa.log('## custom events');
     var render = hyperHTML.bind(document.createElement('p'));
     var e = document.createEvent('Event');
-    e.initEvent('Custom-EVENT', true, true);
-    (render`<span onCustom-EVENT="${function (e) {
-      tressa.assert(e.type === 'Custom-EVENT', 'event triggered');
+    e.initEvent('custom-event', true, true);
+    (render`<span on-custom-event="${function (e) {
+      tressa.assert(e.type === 'custom-event', 'event triggered');
       done();
     }}">how cool</span>`
     ).firstElementChild.dispatchEvent(e);
@@ -466,7 +468,7 @@ tressa.async(function (done) {
   if (!('ownerSVGElement' in wrap.firstChild)) wrap.firstChild.ownerSVGElement = null;
   result = hyperHTML.adopt(wrap)`<svg>${
     [{x: 1, y: 2}].map(item => hyperHTML.wire(item, 'adopt')`
-      <rect x="${item.x}" y="${item.y}" />
+      <rect x$="${item.x}" y$="${item.y}" />
     `)
   }</svg>`;
   tressa.assert(
@@ -586,7 +588,7 @@ tressa.async(function (done) {
   var div = document.createElement('div');
   function update(value, attr) {
     return hyperHTML.bind(div)`
-    <input value="${value}" shaka="${attr}">`;
+    <input value="${value}" shaka$="${attr}">`;
   }
   var input = update('', '').firstElementChild;
   input.value = '456';
@@ -625,16 +627,16 @@ tressa.async(function (done) {
   }`;
   tressa.assert(div.childElementCount === 5, 'correct elements as setVirtual');
 })
-.then(function () {
-  tressa.log('## attributes with weird chars');
-  var div = document.createElement('div');
-  hyperHTML.bind(div)`<p $foo=${'bar'}></p>`;
-  tressa.assert(div.firstChild.getAttribute('$foo') === 'bar', 'OK');
-})
+// .then(function () {
+//   tressa.log('## attributes with weird chars');
+//   var div = document.createElement('div');
+//   hyperHTML.bind(div)`<p $foo=${'bar'}></p>`;
+//   tressa.assert(div.firstChild.getAttribute('$foo') === 'bar', 'OK');
+// })
 .then(function () {
   tressa.log('## attributes without quotes');
   var div = document.createElement('div');
-  hyperHTML.bind(div)`<p test=${'a"b'}></p>`;
+  hyperHTML.bind(div)`<p test$=${'a"b'}></p>`;
   tressa.assert(div.firstChild.getAttribute('test') === 'a"b', 'OK');
 })
 .then(function () {
@@ -678,31 +680,31 @@ tressa.async(function (done) {
 .then(function () {
   tressa.log('## attributes with null values');
   var div = document.createElement('div');
-  hyperHTML.bind(div)`<p any-attr=${'1'}>any content</p>`;
+  hyperHTML.bind(div)`<p any-attr$=${'1'}>any content</p>`;
   tressa.assert(
     div.firstChild.hasAttribute('any-attr') &&
     div.firstChild.getAttribute('any-attr') === '1',
     'regular attribute'
   );
-  hyperHTML.bind(div)`<p any-attr=${null}>any content</p>`;
+  hyperHTML.bind(div)`<p any-attr$=${null}>any content</p>`;
   tressa.assert(
     !div.firstChild.hasAttribute('any-attr') &&
     div.firstChild.getAttribute('any-attr') == null,
     'can be removed'
   );
-  hyperHTML.bind(div)`<p any-attr=${undefined}>any content</p>`;
+  hyperHTML.bind(div)`<p any-attr$=${undefined}>any content</p>`;
   tressa.assert(
     !div.firstChild.hasAttribute('any-attr') &&
     div.firstChild.getAttribute('any-attr') == null,
     'multiple times'
   );
-  hyperHTML.bind(div)`<p any-attr=${'2'}>any content</p>`;
+  hyperHTML.bind(div)`<p any-attr$=${'2'}>any content</p>`;
   tressa.assert(
     div.firstChild.hasAttribute('any-attr') &&
     div.firstChild.getAttribute('any-attr') === '2',
     'but can be also reassigned'
   );
-  hyperHTML.bind(div)`<p any-attr=${'3'}>any content</p>`;
+  hyperHTML.bind(div)`<p any-attr$=${'3'}>any content</p>`;
   tressa.assert(
     div.firstChild.hasAttribute('any-attr') &&
     div.firstChild.getAttribute('any-attr') === '3',

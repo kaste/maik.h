@@ -1,6 +1,8 @@
 /* eslint semi: [1, 'always'] */
 
 import {majinbuu} from '../node_modules/majinbuu/esm/main.js';
+import {makeAttributeUpdateFn} from './attribute-updater.js';
+import {makeRxAwareAttributeUpdateFn} from './rx-aware-attribute-updater.js'
 
 var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
@@ -684,7 +686,9 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         update = setAnyContent(target, childNodes, new Aura(target, childNodes));
         break;
       case 'attr':
-        update = setAttribute(target, removeAttributes, info.name);
+        // update = makeRxAwareAttributeUpdateFn(target, removeAttributes, info.name);
+        update = makeAttributeUpdateFn(target, removeAttributes, info.name);
+        // update = setAttribute(target, removeAttributes, info.name);
         break;
       case 'text':
         update = setTextContent(target);
@@ -947,6 +951,9 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       switch (path[i++]) {
         case 'attributes':
           var name = virtualNode.name;
+          if (name.endsWith('$')) {
+            name = name.slice(0, -1);
+          }
           if (!parentNode.hasAttribute(name)) {
             parentNode.setAttribute(name, '');
           }

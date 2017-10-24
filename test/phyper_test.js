@@ -149,13 +149,13 @@ describe('bind/render', () => {
   context('handling attributes', () => {
     it('passes an attribute value', () => {
       let render = bind(div)
-      render`<p some-attr=${'value'}></p>`
+      render`<p some-attr$=${'value'}></p>`
       matchInnerHTML(`<p some-attr="value"></p>`, div)
     })
 
     it('resists XSS attacks', () => {
       let render = bind(div)
-      render`<p some-attr="${'"><script>alert("boo");</script><div foo="'}"></p>`
+      render`<p some-attr$="${'"><script>alert("boo");</script><div foo="'}"></p>`
       matchInnerHTML(`<p some-attr="&quot;><script>alert(&quot;boo&quot;);</script><div foo=&quot;"></p>`, div)
     })
   })
