@@ -1,3 +1,5 @@
+/* eslint semi: [1, 'always'] */
+
 import {majinbuu} from '../node_modules/majinbuu/esm/main.js';
 
 var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
