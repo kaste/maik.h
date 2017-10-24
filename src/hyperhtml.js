@@ -1239,5 +1239,5 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
 export default hyperHTML;
 
-const {bind} = hyperHTML;
-export {bind};
+const {bind, escape, wire} = hyperHTML;
+export {bind, escape, wire};
