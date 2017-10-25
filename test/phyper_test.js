@@ -1,9 +1,9 @@
 /* global chai */
 
-import {bind, wire} from '../src/hyperhtml.js'
-import {matchInnerHTML, xfail} from './utils.js'
+import { bind, wire } from '../src/hyperhtml.js'
+import { matchInnerHTML, xfail } from './utils.js'
 
-const {assert} = chai
+const { assert } = chai
 
 describe('bind/render', () => {
   let div
@@ -51,12 +51,15 @@ describe('bind/render', () => {
   it('resists XSS by escaping html', () => {
     let render = bind(div)
     render`<p>${'<script>alert("boom");</script>'}</p>`
-    matchInnerHTML(`<p>&lt;script&gt;alert("boom");&lt;/script&gt;</p>`, div)
+    matchInnerHTML(
+      `<p>&lt;script&gt;alert("boom");&lt;/script&gt;</p>`,
+      div
+    )
   })
 
   it('renders raw html if explicitly told', () => {
     let render = bind(div)
-    render`<p>${{html: '<em>foo</em>'}}</p>`
+    render`<p>${{ html: '<em>foo</em>' }}</p>`
     matchInnerHTML(`<p>${'<em>foo</em>'}</p>`, div)
   })
 

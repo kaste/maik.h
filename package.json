@@ -8,18 +8,16 @@
   "scripts": {
     "build": "rollup -c",
     "postbuild": "npm run minify",
-
     "buildrx": "rollup src/minimal-rx.js -o minimal-rx.js -f iife -n Rx",
     "postbuildrx":
-      " && uglifyjs minimal-rx.js -o minimal-rx.min.js --compress --mangle",
-
+      "uglifyjs minimal-rx.js -o minimal-rx.min.js --compress --mangle",
     "dev": "rollup -c -w",
-
     "coveralls": "cat ./coverage/lcov.info | coveralls",
     "ie": "babel ./test/test.js --out-dir ./test/ie --presets=es2015",
     "minify":
       "uglifyjs index.js --comments=\"/^!/\" --compress --mangle -o min.js",
-    "size": "cat index.js | wc -c;cat min.js | wc -c;gzip -c min.js | wc -c",
+    "size":
+      "cat index.js | wc -c;cat min.js | wc -c;gzip -c min.js | wc -c",
     "test": "istanbul cover test/runner.js",
     "prepare": "patch-package"
   },
