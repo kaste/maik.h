@@ -1,7 +1,9 @@
 .DS_Store
 node_modules/
 coverage/
-index.js
-index.mjs
-min.js
-min.mjs
+/index.js
+/index.mjs
+/min.js
+/min.mjs
+/minimal-rx.js
+/minimal-rx.min.js

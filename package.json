@@ -8,10 +8,17 @@
   "scripts": {
     "build": "rollup -c",
     "postbuild": "npm run minify",
+
+    "buildrx": "rollup src/minimal-rx.js -o minimal-rx.js -f iife -n Rx",
+    "postbuildrx":
+      " && uglifyjs minimal-rx.js -o minimal-rx.min.js --compress --mangle",
+
     "dev": "rollup -c -w",
+
     "coveralls": "cat ./coverage/lcov.info | coveralls",
     "ie": "babel ./test/test.js --out-dir ./test/ie --presets=es2015",
-    "minify": "uglifyjs index.js --comments=\"/^!/\" --compress --mangle -o min.js",
+    "minify":
+      "uglifyjs index.js --comments=\"/^!/\" --compress --mangle -o min.js",
     "size": "cat index.js | wc -c;cat min.js | wc -c;gzip -c min.js | wc -c",
     "test": "istanbul cover test/runner.js",
     "prepare": "patch-package"
@@ -20,13 +27,7 @@
     "type": "git",
     "url": "git+https://github.com/WebReflection/hyperhtml.git"
   },
-  "keywords": [
-    "dom",
-    "template",
-    "fast",
-    "performance",
-    "diff"
-  ],
+  "keywords": ["dom", "template", "fast", "performance", "diff"],
   "author": "Andrea Giammarchi",
   "license": "ISC",
   "bugs": {
@@ -50,7 +51,9 @@
     "patch-package": "^3.5.1",
     "prettier": "^1.7.4",
     "rollup": "^0.50.0",
+    "rxjs-es": "^5.0.0-beta.12",
     "tressa": "^0.3.1",
-    "uglify-js": "^2.8.5"
-  }
+    "uglify-es": "^3.1.5"
+  },
+  "dependencies": {}
 }

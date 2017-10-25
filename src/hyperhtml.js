@@ -686,8 +686,8 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         update = setAnyContent(target, childNodes, new Aura(target, childNodes));
         break;
       case 'attr':
-        // update = makeRxAwareAttributeUpdateFn(target, removeAttributes, info.name);
-        update = makeAttributeUpdateFn(target, removeAttributes, info.name);
+        update = makeRxAwareAttributeUpdateFn(target, removeAttributes, info.name);
+        // update = makeAttributeUpdateFn(target, removeAttributes, info.name);
         // update = setAttribute(target, removeAttributes, info.name);
         break;
       case 'text':

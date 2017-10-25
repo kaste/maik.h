@@ -12,9 +12,9 @@ export const makeRxAwareAttributeUpdateFn = (
   name
 ) => {
   return makeAttributeUpdateFn(attribute, removedAttributes, name, {
-    makeAttributeSetter: makeRxAttributeSetter,
-    makePropertySetter: makeRxPropertySetter,
-    makeEventHandler: makeRxEventHandler
+    makeAttributeSetterF: makeRxAttributeSetter,
+    makePropertySetterF: makeRxPropertySetter,
+    makeEventHandlerF: makeRxEventHandler
   })
 }
 
@@ -74,4 +74,5 @@ export const makeRxEventHandler = (node, eventName) => {
   }
 }
 
-const isObservable = value => value && Rx.Symbol.observable in value
+const isObservable = value =>
+  value != null && typeof value === 'object' && Rx.Symbol.observable in value
