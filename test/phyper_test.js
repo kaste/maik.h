@@ -6,7 +6,6 @@ import {matchInnerHTML, xfail} from './utils.js'
 const {assert} = chai
 
 describe('bind/render', () => {
-
   let div
 
   beforeEach(() => {
@@ -73,7 +72,7 @@ describe('bind/render', () => {
     it('re-uses the same element on re-render', () => {
       let render = bind(div)
       render`<p>${'foo'}</p>`
-      let p  = div.querySelector('p')
+      let p = div.querySelector('p')
       let text = p.firstChild
       assert.isOk(p)
       assert.isOk(text)
@@ -143,7 +142,6 @@ describe('bind/render', () => {
       render`<p>${[em, em2]}</p>`
       matchInnerHTML(`<p><em>foo</em><em>foo</em></p>`, div)
     })
-
   })
 
   context('attributes', () => {
@@ -156,7 +154,10 @@ describe('bind/render', () => {
     it('resists XSS attacks', () => {
       let render = bind(div)
       render`<p some-attr$="${'"><script>alert("boo");</script><div foo="'}"></p>`
-      matchInnerHTML(`<p some-attr="&quot;><script>alert(&quot;boo&quot;);</script><div foo=&quot;"></p>`, div)
+      matchInnerHTML(
+        `<p some-attr="&quot;><script>alert(&quot;boo&quot;);</script><div foo=&quot;"></p>`,
+        div
+      )
     })
 
     it('handles `true` as setting the empty string', () => {
@@ -202,13 +203,12 @@ describe('bind/render', () => {
       assert.equal(div.firstChild.align, '')
       matchInnerHTML(`<p align=""></p>`, div)
     })
-
   })
 
   context('handling events', () => {
-    it('adds an event listener', (done) => {
+    it('adds an event listener', done => {
       let render = bind(div)
-      const handler = (ev) => {
+      const handler = ev => {
         done()
       }
       render`<p onclick=${handler}></p>`
@@ -220,7 +220,7 @@ describe('bind/render', () => {
 
     it('removes an event listener', () => {
       let render = bind(div)
-      const handler = (ev) => {
+      const handler = ev => {
         assert.fail()
       }
       render`<p onclick=${handler}></p>`
@@ -257,6 +257,4 @@ describe('wire', () => {
 
     assert.equal(t1, t2)
   })
-
 })
-
