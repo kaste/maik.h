@@ -3,13 +3,15 @@
     <link rel="stylesheet" type="text/css" href="../node_modules/mocha/mocha.css">
     <script defer src="../node_modules/chai/chai.js"></script>
     <script defer src="../node_modules/mocha/mocha.js"></script>
-    <script defer src="../minimal-rx.js"></script>
+    <script defer src="../node_modules/%40reactivex/rxjs/dist/global/Rx.js"></script>
+    <!-- <script defer src="../minimal-rx.js"></script> -->
   </head>
   <body>
     <div id="mocha"></div>
 
     <script type="module">mocha.setup('bdd')</script>
     <script type="module" src="./phyper_test.js"></script>
+    <script type="module" src="./rx-aware_test.js"></script>
     <script type="module">mocha.run()</script>
   </body>
 </html>
