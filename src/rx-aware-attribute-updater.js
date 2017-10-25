@@ -74,5 +74,7 @@ export const makeRxEventHandler = (node, eventName) => {
   }
 }
 
+const isObject = x => x != null && typeof x === 'object'
+
 const isObservable = value =>
-  value != null && typeof value === 'object' && Rx.Symbol.observable in value
+  isObject(value) && Rx.Symbol.observable in value
