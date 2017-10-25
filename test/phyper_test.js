@@ -146,7 +146,7 @@ describe('bind/render', () => {
 
   })
 
-  context('handling attributes', () => {
+  context('attributes', () => {
     it('passes an attribute value', () => {
       let render = bind(div)
       render`<p some-attr$=${'value'}></p>`
@@ -158,6 +158,51 @@ describe('bind/render', () => {
       render`<p some-attr$="${'"><script>alert("boo");</script><div foo="'}"></p>`
       matchInnerHTML(`<p some-attr="&quot;><script>alert(&quot;boo&quot;);</script><div foo=&quot;"></p>`, div)
     })
+
+    it('handles `true` as setting the empty string', () => {
+      let render = bind(div)
+      render`<p hidden$=${true}></p>`
+      matchInnerHTML(`<p hidden=""></p>`, div)
+      assert.equal(div.firstChild.hidden, true)
+    })
+
+    it('handles `false` as remove-the-attribute intent', () => {
+      let render = bind(div)
+      render`<p hidden$=${false}></p>`
+      matchInnerHTML(`<p></p>`, div)
+      assert.equal(div.firstChild.hidden, false)
+    })
+
+    it('handles `undefined` as remove-the-attribute intent', () => {
+      let render = bind(div)
+      render`<p hidden$=${undefined}></p>`
+      matchInnerHTML(`<p></p>`, div)
+      assert.equal(div.firstChild.hidden, false)
+    })
+
+    it('handles `null` as remove-the-attribute intent', () => {
+      let render = bind(div)
+      render`<p hidden$=${null}></p>`
+      matchInnerHTML(`<p></p>`, div)
+      assert.equal(div.firstChild.hidden, false)
+    })
+  })
+
+  context('native properties/accessors', () => {
+    it('handles `null` as setting the empty string', () => {
+      let render = bind(div)
+      render`<p align=${null}></p>`
+      assert.equal(div.firstChild.align, '')
+      matchInnerHTML(`<p align=""></p>`, div)
+    })
+
+    it('handles `undefined` as setting the empty string', () => {
+      let render = bind(div)
+      render`<p align=${undefined}></p>`
+      assert.equal(div.firstChild.align, '')
+      matchInnerHTML(`<p align=""></p>`, div)
+    })
+
   })
 
   context('handling events', () => {
