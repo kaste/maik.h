@@ -2,6 +2,12 @@
 # yarn lockfile v1
 
 
+"@reactivex/rxjs@^5.5.1":
+  version "5.5.1"
+  resolved "https://registry.yarnpkg.com/@reactivex/rxjs/-/rxjs-5.5.1.tgz#6d982ebca78b6f6bbfd88fc08b05af4884b67ffd"
+  dependencies:
+    symbol-observable "^1.0.1"
+
 abab@^1.0.3:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/abab/-/abab-1.0.4.tgz#5faad9c2c07f60dd76770f71cf025b62a63cfd4e"
