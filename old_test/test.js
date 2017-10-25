@@ -335,7 +335,7 @@ tressa.async(function (done) {
   if (SKIP_ADOPT) return;
   tressa.log('## hyperHTML.adopt(node)');
   let wrap = document.createElement('div');
-  wrap.innerHTML = '<style>*{color:red;}</style><p></p><div test="before"> before <ul><li> lonely </li></ul>NO<hr></div>';
+  wrap.innerHTML = '<style>*{color:red;}</style><p></p><div prop="foo" test="before"> before <ul><li> lonely </li></ul>NO<hr></div>';
   let div = wrap.lastElementChild;
   let text = div.firstChild;
   let ul = div.firstElementChild;
@@ -343,6 +343,7 @@ tressa.async(function (done) {
   let model = {
     click: function () {},
     css: '* { color: blue; }',
+    prop: 'bar',
     test: 'after',
     text: 'after',
     list: [
@@ -357,6 +358,8 @@ tressa.async(function (done) {
   tressa.assert(wrap.lastElementChild === div, 'structure has not changed');
   tressa.assert(div.firstElementChild === ul, 'not even the list');
   tressa.assert(div.lastElementChild === hr, 'or the hr');
+  tressa.assert(div.getAttribute('test') === 'after');
+  tressa.assert(div.prop, 'bar');
   model.list.push({name: 'third'});
   model.inBetween = document.createElement('br');
   update(render, model);
@@ -368,7 +371,7 @@ tressa.async(function (done) {
     render`
     <style>${model.css}</style>
     <p onclick="${model.click}"> ${Math.random()} </p>
-    <div test="${model.test}">
+    <div prop="${model.prop}" test$="${model.test}">
       ${model.text}
       <ul>
       ${model.list.map(item => `<li> ${item.name} </li>`)}
