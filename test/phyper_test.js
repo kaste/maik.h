@@ -261,3 +261,29 @@ describe('wire', () => {
     assert.equal(t1, t2)
   })
 })
+
+describe('bugs', () => {
+  let div
+
+  beforeEach(() => {
+    div = document.createElement('div')
+    document.body.appendChild(div)
+  })
+
+  afterEach(() => {
+    document.body.removeChild(div)
+  })
+
+  it('correctly imports nodes so that custom elements v0 upgrade', () => {
+    let proto = Object.create(HTMLElement.prototype)
+    proto.createdCallback = function() {
+      this.innerHTML = '<p>Hello</p>'
+    }
+
+    document.registerElement('x-foo', { prototype: proto })
+
+    let render = bind(div)
+    render`<x-foo></x-foo>`
+    assert.equal(`<x-foo><p>Hello</p></x-foo>`, div.innerHTML)
+  })
+})

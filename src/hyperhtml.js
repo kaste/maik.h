@@ -856,13 +856,14 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   // IE 11 has problems with cloning templates too
   // it "forgets" empty childNodes
+  // TODO: Does it also have problems with importing nodes?
   var cloneNode = (function () {
     featureFragment.appendChild(createText(featureFragment, 'g'));
     featureFragment.appendChild(createText(featureFragment, ''));
     return featureFragment.cloneNode(true).childNodes.length === 1 ?
       function (node) {
         for (var
-          clone = node.cloneNode(),
+          clone = document.importNode(),
           childNodes = node.childNodes || [],
           i = 0, length = childNodes.length;
           i < length; i++
@@ -872,7 +873,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         return clone;
       } :
       function (fragment) {
-        return fragment.cloneNode(true);
+        return document.importNode(fragment, true);
       };
   }());
 
