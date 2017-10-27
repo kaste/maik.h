@@ -103,7 +103,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   var SHOULD_USE_ATTRIBUTE = /^style$/i;
   var SHOULD_USE_TEXT_CONTENT = /^style|textarea$/i;
-  var EXPANDO = '_hyper: ';
+  var EXPANDO = '_hyper_';
   var UID = EXPANDO + ((Math.random() * new Date) | 0) + ';';
   var UIDC = '<!--' + UID + '-->';
 
@@ -534,7 +534,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       OWNER_SVG_ELEMENT in node ?
         createSVGFragment :
         createHTMLFragment
-    )(node, html.replace(no, comments));
+    )(node, html);
   }
 
   // create fragment for HTML
@@ -847,18 +847,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         return parentNode;
       };
 
-  // sanitizes interpolations as comments
-  var attrName = '[^\\S]+[^ \\f\\n\\r\\t\\/>"\'=]+';
-  var no = new RegExp('(<[a-z]+[a-z0-9:_-]*)((?:' + attrName + '(?:=(?:\'.*?\'|".*?"|<.+?>|\\S+))?)+)([^\\S]*/?>)', 'gi');
-  var findAttributes = new RegExp('(' + attrName + '=)([\'"]?)' + UIDC + '\\2', 'gi');
-  var comments = function ($0, $1, $2, $3) {
-    return $1 + $2.replace(findAttributes, replaceAttributes) + $3;
-  };
-
-  var replaceAttributes = function ($0, $1, $2) {
-    return $1 + ($2 || '"') + UID + ($2 || '"');
-  };
-
   // [element] = {template, updates};
   var hypers = new $WeakMap;
 
@@ -1042,6 +1030,50 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     return updates;
   }
 
+
+  /**
+   * The functions `findTagClose` and `getHTML` originally come from the
+   * lit-html PR https://github.com/PolymerLabs/lit-html/pull/153
+   * authored by https://github.com/jridgewell
+   *
+   * Slightly modified to actually work.
+   */
+
+  /**
+   * Finds the closing index of the last closed HTML tag.
+   * This has 3 possible return values:
+   *   - `-1`, meaning there is no tag in str.
+   *   - `string.length`, meaning the last opened tag is unclosed.
+   *   - Some positive number < str.length, meaning the index of the closing '>'.
+   */
+  function findTagClose(str) {
+    const close = str.lastIndexOf('>');
+    const open = str.indexOf('<', close + 1);
+    return open > -1 ? str.length : close;
+  }
+
+  const textMarker = UIDC;
+  const attributeMarker = UID;
+
+  const getHTML = (strings) => {
+    const l = strings.length;
+    let html = '';
+    let isTextBinding = true;
+    for (let i = 0; i < l - 1; i++) {
+      const s = strings[i];
+      html += s;
+      // We're in a text position if the previous string closed its tags.
+      // If it doesn't have any tags, then we use the previous text position
+      // state.
+      const closing = findTagClose(s);
+      isTextBinding = closing > -1 ? closing < s.length : isTextBinding;
+      html += isTextBinding ? textMarker : attributeMarker;
+    }
+    html += strings[l - 1];
+    return html;
+  };
+
+
   // ---------------------------------------------
   // Template related utilities
   // ---------------------------------------------
@@ -1050,7 +1082,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // create, parse, and store retrieved info
   function createTemplate(template) {
     var paths = [];
-    var fragment = createFragment(this, template.join(UIDC));
+    var fragment = createFragment(this, getHTML(template));
     var info = {fragment: fragment, paths: paths};
     hyperSeeker(fragment, paths, template.slice());
     templates.set(template, info);
