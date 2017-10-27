@@ -2,7 +2,7 @@
 
 import {majinbuu} from '../node_modules/majinbuu/esm/main.js';
 import {makeAttributeUpdateFn} from './attribute-updater.js';
-import {makeRxAwareAttributeUpdateFn} from './rx-aware-attribute-updater.js'
+import {makeRxAwareAttributeUpdateFn, rxAware} from './rx-aware-attribute-updater.js'
 
 var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
@@ -346,8 +346,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
             );
           } else if (isPromise_ish(value)) {
             value.then(anyContent);
-          } else if ('subscribe' in value) {
-            value.subscribe(anyContent);
           } else if ('placeholder' in value) {
             invokeAtDistance(value, anyContent);
           } else if ('text' in value) {
@@ -677,13 +675,15 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     }
   }
 
+  const makeRxAwareContentUpdateFn = rxAware(setAnyContent);
+
   // specify the content to update
   function setContent(info, target, removeAttributes, childNodes) {
     var update;
     switch (info.type) {
       case 'any':
-        // TODO: don't pass the target, it shouldn't be needed
-        update = setAnyContent(target, childNodes, new Aura(target, childNodes));
+        update = makeRxAwareContentUpdateFn(target, childNodes, new Aura(target, childNodes));
+        // update = setAnyContent(target, childNodes, new Aura(target, childNodes));
         break;
       case 'attr':
         update = makeRxAwareAttributeUpdateFn(target, removeAttributes, info.name);

@@ -18,7 +18,7 @@ export const makeRxAwareAttributeUpdateFn = (
   })
 }
 
-const rxAware = fn => (...args) => {
+export const rxAware = fn => (...args) => {
   let oldValue, subscription
   let sink = fn(...args)
 

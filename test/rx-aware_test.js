@@ -2,8 +2,8 @@
 
 // import '../node_modules/rx-lite/rx.lite.js'
 
-import { bind, wire } from '../src/hyperhtml.js'
-import { matchInnerHTML, xfail } from './utils.js'
+import { bind } from '../src/hyperhtml.js'
+import { matchInnerHTML } from './utils.js'
 
 const { assert } = chai
 
@@ -87,5 +87,45 @@ describe('event handlers as subjects', () => {
     }
 
     render`<p on-click=${null}></p>`
+  })
+})
+
+describe('observers for nodes', () => {
+  let div
+
+  beforeEach(() => {
+    div = document.createElement('div')
+    document.body.appendChild(div)
+  })
+
+  afterEach(() => {
+    document.body.removeChild(div)
+  })
+
+  it('pushes values into the template hole', () => {
+    let subject = new Rx.Subject()
+
+    let render = bind(div)
+    render`<p>${subject}</p>`
+
+    matchInnerHTML(`<p></p>`, div)
+
+    subject.next('Hello')
+    matchInnerHTML(`<p>Hello</p>`, div)
+  })
+
+  it('unsubscribes a previous observable', function() {
+    let render = bind(div)
+
+    let subject = new Rx.Subject()
+    render`<p>${subject}</p>`
+    let newSubject = new Rx.Subject()
+    render`<p>${newSubject}</p>`
+
+    subject.next('Hello')
+    matchInnerHTML(`<p></p>`, div)
+
+    newSubject.next('World')
+    matchInnerHTML(`<p>World</p>`, div)
   })
 })
