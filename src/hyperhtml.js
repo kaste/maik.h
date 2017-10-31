@@ -522,25 +522,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     return node.ownerDocument.createTextNode(text);
   }
 
-  // returns current customElements reference
-  // compatible with basicHTML too
-  function getCEClass(node) {
-    var doc = hyper.document;
-    var ce = doc.customElements || doc.defaultView.customElements;
-    return ce && ce.get(node.nodeName.toLowerCase());
-  }
-
-  // verify that an attribute has
-  // a special meaning for the node
-  function isSpecialAttribute(node, name) {
-    var notSVG = !(OWNER_SVG_ELEMENT in node);
-    if (notSVG && /-/.test(node.nodeName)) {
-      var Class = getCEClass(node);
-      if (Class) node = Class.prototype;
-    }
-    return notSVG && name in node;
-  }
-
   // use a placeholder and resolve with the right callback
   function invokeAtDistance(value, callback) {
     callback(value.placeholder);
