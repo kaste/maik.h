@@ -1,8 +1,10 @@
 /* eslint semi: [1, 'always'] */
 
 import {majinbuu} from '../node_modules/majinbuu/esm/main.js';
-import {makeAttributeUpdateFn} from './attribute-updater.js';
-import {makeRxAwareAttributeUpdateFn, rxAware} from './rx-aware-attribute-updater.js'
+// import {makeAttributeUpdateFn} from './attribute-updater.js';
+import {
+  makeRxAwareAttributeUpdateFn, rxAware
+} from './rx-aware-attribute-updater.js';
 
 var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
