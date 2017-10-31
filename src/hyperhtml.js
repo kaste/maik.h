@@ -466,38 +466,36 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   // create fragment for HTML
   function createHTMLFragment(node, html) {
-    var fragment;
-    var document = node.ownerDocument;
-    var container = document.createElement('template');
-    var supportsTemplate = 'content' in container;
-    var needsTableWrap = false;
-    if (!supportsTemplate) {
-      // DO NOT MOVE THE FOLLOWING LINE ELSEWHERE
-      fragment = createDocumentFragment(document);
-      // (a jsdom + nodejs tests coverage gotcha)
+    let document = node.ownerDocument;
+    let container = document.createElement('template');
+    let supportsTemplate = 'content' in container;
+
+    if (supportsTemplate) {
+      container.innerHTML = html;
+      return container.content;
+    } else {
+      let fragment = createDocumentFragment(document);
 
       // el.innerHTML = '<td></td>'; is not possible
       // if the content is a partial internal table content
       // it needs to be wrapped around once injected.
       // HTMLTemplateElement does not suffer this issue.
-      needsTableWrap = /^[^\S]*?<(col(?:group)?|t(?:head|body|foot|r|d|h))/i.test(html);
-    }
-    if (needsTableWrap) {
-      // secure the RegExp.$1 result ASAP to avoid issues
-      // in case a non-browser DOM library uses RegExp internally
-      // when HTML content is injected (basicHTML / jsdom / others...)
-      var selector = RegExp.$1;
-      container.innerHTML = '<table>' + html + '</table>';
-      appendNodes(fragment, slice.call(container.querySelectorAll(selector)));
-    } else {
-      container.innerHTML = html;
-      if (supportsTemplate) {
-        fragment = container.content;
+      let needsTableWrap = /^[^\S]*?<(col(?:group)?|t(?:head|body|foot|r|d|h))/i.test(html);
+      if (needsTableWrap) {
+        // secure the RegExp.$1 result ASAP to avoid issues
+        // in case a non-browser DOM library uses RegExp internally
+        // when HTML content is injected (basicHTML / jsdom / others...)
+        let selector = RegExp.$1;
+        container.innerHTML = '<table>' + html + '</table>';
+        appendNodes(fragment, slice.call(container.querySelectorAll(selector)));
       } else {
+        container.innerHTML = html;
         appendNodes(fragment, slice.call(container.childNodes));
       }
+
+      return fragment;
     }
-    return fragment;
+
   }
 
   // create a fragment for SVG
