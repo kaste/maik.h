@@ -12,13 +12,11 @@
     "postbuildrx":
       "uglifyjs minimal-rx.js -o minimal-rx.min.js --compress --mangle",
     "dev": "rollup -c -w",
-    "coveralls": "cat ./coverage/lcov.info | coveralls",
     "ie": "babel ./test/test.js --out-dir ./test/ie --presets=es2015",
     "minify":
       "uglifyjs index.js --comments=\"/^!/\" --compress --mangle -o min.js",
     "size":
       "cat index.js | wc -c;cat min.js | wc -c;gzip -c min.js | wc -c",
-    "test": "istanbul cover test/runner.js",
     "prepare": "patch-package"
   },
   "repository": {
@@ -37,9 +35,7 @@
     "babel-eslint": "^8.0.1",
     "babel-preset-es2015": "^6.22.0",
     "chai": "^4.1.2",
-    "coveralls": "^2.13.1",
     "eslint": "^4.8.0",
-    "istanbul": "^0.4.5",
     "jsdom": "^9.12.0",
     "karma": "^1.7.1",
     "karma-chai": "^0.1.0",
