@@ -469,9 +469,9 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     var fragment;
     var document = node.ownerDocument;
     var container = document.createElement('template');
-    var hasContent = 'content' in container;
+    var supportsTemplate = 'content' in container;
     var needsTableWrap = false;
-    if (!hasContent) {
+    if (!supportsTemplate) {
       // DO NOT MOVE THE FOLLOWING LINE ELSEWHERE
       fragment = createDocumentFragment(document);
       // (a jsdom + nodejs tests coverage gotcha)
@@ -491,7 +491,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       appendNodes(fragment, slice.call(container.querySelectorAll(selector)));
     } else {
       container.innerHTML = html;
-      if (hasContent) {
+      if (supportsTemplate) {
         fragment = container.content;
       } else {
         appendNodes(fragment, slice.call(container.childNodes));
