@@ -374,8 +374,9 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   // look for attributes that contains the comment text
   function attributesSeeker(node, paths, parts) {
+    let foundAttributes = [];
     for (var
-      name, realName, attrs,
+      name, realName, attrs, attr,
       attribute,
       cache = Object.create(null),
       attributes = node.attributes,
@@ -404,10 +405,15 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
           attrs = node.attributes;
           // fallback is needed in both jsdom
           // and in not-so-standard browsers/engines
-          cache[name] = attrs[realName] || attrs[realName.toLowerCase()];
-          paths.push(Path('attr', cache[name], realName));
+          attr = cache[name] = attrs[realName] || attrs[realName.toLowerCase()];
+          foundAttributes.push(attr);
+          paths.push(Path('attr', node, realName));
         }
       }
+    }
+    for (let i=0, l=foundAttributes.length, attr; i<l; i++) {
+      attr = foundAttributes[i];
+      node.removeAttributeNode(attr);
     }
   }
 
@@ -663,17 +669,11 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     }
   }
 
-  // remove a list of [node, attribute]
-  function removeAttributeList(list) {
-    for (var i = 0, length = list.length; i < length; i++) {
-      list[i++].removeAttribute(list[i]);
-    }
-  }
 
   const makeRxAwareContentUpdateFn = rxAware(setAnyContent);
 
   // specify the content to update
-  function setContent(info, target, removeAttributes, childNodes) {
+  function setContent(info, target, childNodes) {
     var update;
     switch (info.type) {
       case 'any':
@@ -681,7 +681,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         // update = setAnyContent(target, childNodes, new Aura(target, childNodes));
         break;
       case 'attr':
-        update = makeRxAwareAttributeUpdateFn(target, removeAttributes, info.name);
+        update = makeRxAwareAttributeUpdateFn(target, info.name);
         // update = makeAttributeUpdateFn(target, removeAttributes, info.name);
         // update = setAttribute(target, removeAttributes, info.name);
         break;
@@ -1009,7 +1009,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     for (var
       info, childNodes,
       updates = [],
-      removeAttributes = [],
       i = 0, length = paths.length;
       i < length; i++
     ) {
@@ -1018,11 +1017,9 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       updates[i] = setContent(
         info,
         discoverNode(this, fragment, info, childNodes),
-        removeAttributes,
         childNodes
       );
     }
-    removeAttributeList(removeAttributes);
     return updates;
   }
 
@@ -1127,7 +1124,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     for (var
       info,
       updates = [],
-      removeAttributes = [],
       i = 0, length = paths.length;
       i < length; i++
     ) {
@@ -1135,11 +1131,9 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       updates[i] = setContent(
         info,
         getNode(fragment, info.path),
-        removeAttributes,
         []
       );
     }
-    removeAttributeList(removeAttributes);
     return updates;
   }
 

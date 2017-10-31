@@ -1,7 +1,5 @@
-
 export const makeAttributeUpdateFn = (
-  attribute,
-  removedAttributes,
+  node,
   name,
   {
     makeAttributeSetterF = makeAttributeSetter,
@@ -9,11 +7,7 @@ export const makeAttributeUpdateFn = (
     makeEventHandlerF = makeEventHandler
   } = {}
 ) => {
-  let node = attribute.ownerElement
-
   if (name.startsWith('on')) {
-    removedAttributes.push(node, name)
-
     // Allow `onclick` as well as `on-click`
     let eventName = name[2] === '-' ? name.slice(3) : name.slice(2)
     eventName = eventName.toLowerCase()
@@ -29,15 +23,12 @@ export const makeAttributeUpdateFn = (
   }
 
   if (name.endsWith('$')) {
-    removedAttributes.push(node, name)
-
     let attributeName = name.slice(0, -1)
     let document = node.ownerDocument
     let newAttribute = document.createAttribute(attributeName)
     return makeAttributeSetterF(node, newAttribute)
   }
 
-  removedAttributes.push(node, name)
   return makePropertySetterF(node, name)
 }
 

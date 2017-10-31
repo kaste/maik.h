@@ -6,12 +6,8 @@ import {
   makePropertySetter
 } from './attribute-updater.js'
 
-export const makeRxAwareAttributeUpdateFn = (
-  attribute,
-  removedAttributes,
-  name
-) => {
-  return makeAttributeUpdateFn(attribute, removedAttributes, name, {
+export const makeRxAwareAttributeUpdateFn = (node, name) => {
+  return makeAttributeUpdateFn(node, name, {
     makeAttributeSetterF: makeRxAttributeSetter,
     makePropertySetterF: makeRxPropertySetter,
     makeEventHandlerF: makeRxEventHandler
