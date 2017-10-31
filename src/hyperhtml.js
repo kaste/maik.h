@@ -574,24 +574,17 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   const makeRxAwareContentUpdateFn = rxAware(setAnyContent);
 
-  // specify the content to update
-  function setContent(info, target, childNodes) {
-    var update;
+  // Return function which takes a value and then performs the side-effect
+  // of updating the 'hole' in the template; (...) => (val) => IO
+  function createUpdateFn(info, target, childNodes) {
     switch (info.type) {
       case 'any':
-        update = makeRxAwareContentUpdateFn(target, childNodes, new Aura(target, childNodes));
-        // update = setAnyContent(target, childNodes, new Aura(target, childNodes));
-        break;
+        return makeRxAwareContentUpdateFn(target, childNodes, new Aura(target, childNodes));
       case 'attr':
-        update = makeRxAwareAttributeUpdateFn(target, info.name);
-        // update = makeAttributeUpdateFn(target, removeAttributes, info.name);
-        // update = setAttribute(target, removeAttributes, info.name);
-        break;
+        return makeRxAwareAttributeUpdateFn(target, info.name);
       case 'text':
-        update = setTextContent(target);
-        break;
+        return setTextContent(target);
     }
-    return update;
   }
 
   // used for common path creation.
@@ -916,7 +909,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     ) {
       childNodes = [];
       info = paths[i];
-      updates[i] = setContent(
+      updates[i] = createUpdateFn(
         info,
         discoverNode(this, fragment, info, childNodes),
         childNodes
@@ -1030,7 +1023,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       i < length; i++
     ) {
       info = paths[i];
-      updates[i] = setContent(
+      updates[i] = createUpdateFn(
         info,
         getNode(fragment, info.path),
         []
