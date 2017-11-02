@@ -967,9 +967,9 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   // given a unique template object
   // create, parse, and store retrieved info
-  function createTemplate(template) {
+  function createTemplate(contextNode, template) {
     var paths = [];
-    var fragment = createFragment(this, getHTML(template));
+    var fragment = createFragment(contextNode, getHTML(template));
     var info = {fragment: fragment, paths: paths};
     hyperSeeker(fragment, paths, template.slice());
     templates.set(template, info);
@@ -1033,7 +1033,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     template = TL(template);
     let updaters;
     var info =  templates.get(template) ||
-                createTemplate.call(contextNode, template);
+                createTemplate(contextNode, template);
     if (notAdopting) {
       var fragment = importNode(info.fragment);
       updaters = createUpdaters(fragment, info.paths);
