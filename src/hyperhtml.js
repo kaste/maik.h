@@ -980,28 +980,22 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // of retrieving such path back again.
   // TODO: worth passing the index when available ?
   function createPath(node) {
-    var path = [];
-    var parentNode;
-    switch(node.nodeType) {
-      case ELEMENT_NODE:
-      case DOCUMENT_FRAGMENT_NODE:
-        parentNode = node;
-        break;
-      case COMMENT_NODE:
-        parentNode = node.parentNode;
-        path.unshift(
-          'childNodes',
-          indexOf.call(parentNode.childNodes, node)
-        );
-        break;
-    }
-    for (
+    let path = [];
+    let parentNode;
+
+    if (node.nodeType === COMMENT_NODE) {
+      parentNode = node.parentNode;
+      path.unshift(
+        'childNodes',
+        indexOf.call(parentNode.childNodes, node)
+      );
       node = parentNode;
-      // eslint-disable-next-line no-cond-assign
-      parentNode = parentNode.parentNode;
-      node = parentNode
-    ) {
+    }
+
+    // eslint-disable-next-line no-cond-assign
+    while(parentNode = node.parentNode) {
       path.unshift('children', indexOf.call(getChildren(parentNode), node));
+      node = parentNode;
     }
     return path;
   }
