@@ -409,7 +409,8 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // ---------------------------------------------
 
   // used to convert childNodes to Array
-  var slice = [].slice;
+  const slice = [].slice;
+  const indexOf = [].indexOf;
 
   // used to sanitize html
   var oEscape = {
@@ -848,13 +849,13 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
           var children = getChildren(parentNode);
           var virtualChildren = getChildren(virtualNode.parentNode);
           target = previousElementSibling(virtualNode);
-          var before = target ? (path.indexOf.call(virtualChildren, target) + 1) : -1;
+          var before = target ? (indexOf.call(virtualChildren, target) + 1) : -1;
           target = nextElementSibling(virtualNode);
-          var after = target ? path.indexOf.call(virtualChildren, target) : -1;
-          target = document.createComment(UID);
+          var after = target ? indexOf.call(virtualChildren, target) : -1;
           switch (true) {
             // `${'virtual'}` is actually resolved as `${'any'}`
-            // case before < 0 && after < 0: before = 0;
+            // case before < 0 && after < 0:
+            //   after = 0;
 
             case after < 0:
             // `</a>${'virtual'}`
@@ -873,6 +874,8 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
             childNodes,
             slice.call(children, before, after)
           );
+
+          target = document.createComment(UID);
           if (childNodes.length) {
             insertBefore(
               parentNode,
@@ -988,7 +991,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         parentNode = node.parentNode;
         path.unshift(
           'childNodes',
-          path.indexOf.call(parentNode.childNodes, node)
+          indexOf.call(parentNode.childNodes, node)
         );
         break;
     }
@@ -998,7 +1001,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       parentNode = parentNode.parentNode;
       node = parentNode
     ) {
-      path.unshift('children', path.indexOf.call(getChildren(parentNode), node));
+      path.unshift('children', indexOf.call(getChildren(parentNode), node));
     }
     return path;
   }
