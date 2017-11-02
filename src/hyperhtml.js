@@ -160,10 +160,8 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // entry point for all TL => DOM operations
   function render(template, ...values) {
     var hyper = hypers.get(this);
-    if (
-      !hyper ||
-      hyper.template !== TL(template)
-    ) {
+    template = TL(template);
+    if (!hyper || hyper.template !== template) {
       upgrade(this, template, values);
     } else {
       update(hyper.updaters, values);
@@ -1030,7 +1028,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // create a template, if unknown
   // upgrade a node to use such template for future updates
   function upgrade(contextNode, template, values) {
-    template = TL(template);
     let updaters;
     var info =  templates.get(template) ||
                 createTemplate(contextNode, template);
