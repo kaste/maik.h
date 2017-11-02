@@ -158,15 +158,15 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // ---------------------------------------------
 
   // entry point for all TL => DOM operations
-  function render(template) {
+  function render(template, ...values) {
     var hyper = hypers.get(this);
     if (
       !hyper ||
       hyper.template !== TL(template)
     ) {
-      upgrade.apply(this, arguments);
+      upgrade(this, template, values);
     } else {
-      update.apply(hyper.updates, arguments);
+      update(hyper.updaters, values);
     }
     return this;
   }
@@ -1003,7 +1003,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // given a root node and a list of paths
   // creates an array of updates to invoke
   // whenever the next interpolation happens
-  function createUpdates(fragment, paths) {
+  function createUpdaters(fragment, paths) {
     for (var
       info,
       updates = [],
@@ -1021,30 +1021,30 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   }
 
   // invokes each update function passing interpolated value
-  function update() {
-    for (var i = 1, length = arguments.length; i < length; i++) {
-      this[i - 1](arguments[i]);
+  function update(updateFns, values) {
+    for (var i = 0, length = updateFns.length; i < length; i++) {
+      updateFns[i](values[i]);
     }
   }
 
   // create a template, if unknown
   // upgrade a node to use such template for future updates
-  function upgrade(template) {
+  function upgrade(contextNode, template, values) {
     template = TL(template);
-    var updates;
+    let updaters;
     var info =  templates.get(template) ||
-                createTemplate.call(this, template);
+                createTemplate.call(contextNode, template);
     if (notAdopting) {
       var fragment = importNode(info.fragment);
-      updates = createUpdates(fragment, info.paths);
-      hypers.set(this, {template: template, updates: updates});
-      update.apply(updates, arguments);
-      this.textContent = '';
-      this.appendChild(fragment);
+      updaters = createUpdaters(fragment, info.paths);
+      hypers.set(contextNode, {template: template, updaters: updaters});
+      update(updaters, values);
+      contextNode.textContent = '';
+      contextNode.appendChild(fragment);
     } else {
-      updates = discoverUpdates(this, info.fragment, info.paths);
-      hypers.set(this, {template: template, updates: updates});
-      update.apply(updates, arguments);
+      updaters = discoverUpdates(contextNode, info.fragment, info.paths);
+      hypers.set(contextNode, {template: template, updaters: updaters});
+      update(updaters, values);
     }
   }
 
