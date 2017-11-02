@@ -823,9 +823,27 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       virtualNode = getNode(virtual, path),
       i = 0,
       length = path.length;
-      i < length; i++
+      i < length;
+      i++
     ) {
-      switch (path[i++]) {
+      switch (path[i++]) {  // <- i++!  path is a flat array of tuples
+        case 'children':
+          target = getChildren(parentNode)[path[i]];
+          if (!target) {
+            // if the node is not there, create it
+            target = parentNode.appendChild(
+              parentNode.ownerDocument.createElement(
+                getNode(virtual, path.slice(0, i + 1)).nodeName
+              )
+            );
+
+          }
+
+          if (i === length - 1 && info.type === 'attr') {
+            target.removeAttribute(info.name);
+          }
+          parentNode = target;
+          break;
         case 'childNodes':
           var children = getChildren(parentNode);
           var virtualChildren = getChildren(virtualNode.parentNode);
@@ -871,19 +889,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
           if (childNodes.length === 0) {
             removePreviousText(parentNode, target);
           }
-          break;
-        default:
-          // if the node is not there, create it
-          target = getChildren(parentNode)[path[i]] ||
-                    parentNode.appendChild(
-                      parentNode.ownerDocument.createElement(
-                        getNode(virtual, path.slice(0, i + 1)).nodeName
-                      )
-                    );
-          if (i === 1 && info.type === 'attr') {
-            target.removeAttribute(info.name);
-          }
-          parentNode = target;
           break;
       }
     }

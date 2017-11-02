@@ -377,11 +377,11 @@ describe('adopt', () => {
   })
 
   it('adopts a property', () => {
-    div.innerHTML = `<p prop="before"></p>`
+    div.innerHTML = `<div><p prop="before"></p></div>`
     let render = adopt(div)
-    render`<p prop=${'after'}></p>`
+    render`<div><p prop=${'after'}></p></div>`
 
-    assert.equal(div.firstElementChild.prop, 'after')
-    matchInnerHTML(`<p></p>`, div)
+    assert.equal(div.firstElementChild.firstElementChild.prop, 'after')
+    matchInnerHTML(`<div><p></p></div>`, div)
   })
 })
