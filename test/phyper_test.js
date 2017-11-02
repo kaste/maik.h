@@ -1,6 +1,6 @@
 /* global chai */
 
-import { bind, wire } from '../src/hyperhtml.js'
+import { bind, wire, adopt } from '../src/hyperhtml.js'
 import { matchInnerHTML, xfail } from './utils.js'
 
 const { assert } = chai
@@ -285,5 +285,103 @@ describe('bugs', () => {
     let render = bind(div)
     render`<x-foo></x-foo>`
     assert.equal(`<x-foo><p>Hello</p></x-foo>`, div.innerHTML)
+  })
+
+  it('does not upgrade v1 custom elements with hyper attributes', () => {})
+})
+
+describe('adopt', () => {
+  let div
+
+  beforeEach(() => {
+    div = document.createElement('div')
+    document.body.appendChild(div)
+  })
+
+  afterEach(() => {
+    document.body.removeChild(div)
+  })
+
+  it('basically adopts a given DOM', () => {
+    let innerHTML =
+      '<style>* {color:red;}</style>' +
+      '<p></p>' +
+      '<div prop="foo" test="before">before' +
+      '<ul><li> lonely </li></ul>' +
+      'NO<hr>' +
+      '</div>'
+    div.innerHTML = innerHTML
+
+    let innerDiv = div.lastElementChild
+    let firstText = innerDiv.firstChild
+    let ul = innerDiv.firstElementChild
+    let secondText = ul.nextSibling
+    let hr = innerDiv.lastElementChild
+
+    let model = {
+      css: '* {color: blue;}',
+      click: function() {},
+      newContent: 0.756,
+      prop: 'bar',
+      test: 'after',
+      text: 'after',
+      list: [{ name: 'first' }, { name: 'second' }],
+      inBetween: 'OK'
+    }
+    let render = adopt(div)
+    render`
+      <style>${model.css}</style>
+      <p onclick="${model.click}"> ${model.newContent} </p>
+      <div prop="${model.prop}" test$="${model.test}">
+        ${model.text}
+        <ul>
+        ${model.list.map(item => `<li> ${item.name} </li>`)}
+        </ul>
+        ${model.inBetween}
+        <hr>
+      </div>
+    `
+
+    // Note that `prop` is gone here!
+    let newHTML =
+      '<style>* {color: blue;}</style>' +
+      '<p>0.756</p>' +
+      '<div test="after">after' +
+      '<ul><li> first </li><li> second </li></ul>' +
+      'OK<hr>' +
+      '</div>'
+    matchInnerHTML(newHTML, div)
+    assert.equal(div.lastElementChild.prop, 'bar')
+
+    // It seems that TEXT_NODE's are replaced. Does it matter?
+    assert.equal(div.lastElementChild, innerDiv)
+    // assert.equal(div.lastElementChild.firstChild, firstText)
+    assert.equal(div.lastElementChild.firstElementChild, ul)
+    // assert.equal(
+    //   div.lastElementChild.firstElementChild.nextSibling,
+    //   secondText
+    // )
+    assert.equal(div.lastElementChild.lastElementChild, hr)
+  })
+
+  it.skip('adopts a text node', () => {
+    div.innerHTML = `<p>before</p>`
+    let textNode = div.firstElementChild.firstChild
+
+    let render = adopt(div)
+    render`<p>${'after'}</p>`
+
+    matchInnerHTML(`<p>${'after'}</p>`, div)
+
+    assert.equal(div.firstElementChild.firstChild, textNode)
+  })
+
+  it('adopts a property', () => {
+    div.innerHTML = `<p prop="before"></p>`
+    let render = adopt(div)
+    render`<p prop=${'after'}></p>`
+
+    assert.equal(div.firstElementChild.prop, 'after')
+    matchInnerHTML(`<p></p>`, div)
   })
 })

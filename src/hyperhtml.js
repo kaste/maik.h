@@ -890,6 +890,9 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
                         getNode(virtual, path.slice(0, i + 1)).nodeName
                       )
                     );
+          if (i === 1 && info.type === 'attr') {
+            target.removeAttribute(info.name);
+          }
           parentNode = target;
           break;
       }
@@ -1161,5 +1164,5 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
 export default hyperHTML;
 
-const {bind, escape, wire} = hyperHTML;
-export {bind, escape, wire};
+const {bind, escape, wire, adopt} = hyperHTML;
+export {bind, escape, wire, adopt};
