@@ -826,16 +826,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       i < length; i++
     ) {
       switch (path[i++]) {
-        case 'attributes':
-          var name = virtualNode.name;
-          if (name.endsWith('$')) {
-            name = name.slice(0, -1);
-          }
-          if (!parentNode.hasAttribute(name)) {
-            parentNode.setAttribute(name, '');
-          }
-          target = parentNode.attributes[name];
-          break;
         case 'childNodes':
           var children = getChildren(parentNode);
           var virtualChildren = getChildren(virtualNode.parentNode);
@@ -995,11 +985,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
           'childNodes',
           path.indexOf.call(parentNode.childNodes, node)
         );
-        break;
-      case ATTRIBUTE_NODE:
-      default: // jsdom here does not provide a nodeType 2 ...
-        parentNode = node.ownerElement;
-        path.unshift('attributes', node.name);
         break;
     }
     for (
