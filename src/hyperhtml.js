@@ -898,7 +898,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   }
 
   // like createUpdates but for nodes with already a content
-  function discoverUpdates(fragment, paths) {
+  function discoverUpdates(contextNode, fragment, paths) {
     for (var
       info, childNodes,
       updates = [],
@@ -909,7 +909,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       info = paths[i];
       updates[i] = createUpdateFn(
         info,
-        discoverNode(this, fragment, info, childNodes),
+        discoverNode(contextNode, fragment, info, childNodes),
         childNodes
       );
     }
@@ -1046,13 +1046,13 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
                 createTemplate.call(this, template);
     if (notAdopting) {
       var fragment = importNode(info.fragment);
-      updates = createUpdates.call(this, fragment, info.paths);
+      updates = createUpdates(fragment, info.paths);
       hypers.set(this, {template: template, updates: updates});
       update.apply(updates, arguments);
       this.textContent = '';
       this.appendChild(fragment);
     } else {
-      updates = discoverUpdates.call(this, info.fragment, info.paths);
+      updates = discoverUpdates(this, info.fragment, info.paths);
       hypers.set(this, {template: template, updates: updates});
       update.apply(updates, arguments);
     }
