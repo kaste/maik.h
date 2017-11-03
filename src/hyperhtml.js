@@ -353,7 +353,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         case COMMENT_NODE:
           if (child.textContent === UID) {
             strings.shift();
-            notes.push(createNote('any', child));
+            notes.push(createNote('node', child));
           }
           break;
         case TEXT_NODE:
@@ -575,7 +575,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // of updating the 'hole' in the template; (...) => (val) => IO
   function createUpdateFn(info, target, childNodes) {
     switch (info.type) {
-      case 'any':
+      case 'node':
         return makeRxAwareContentUpdateFn(target, childNodes, new Aura(target, childNodes));
       case 'attr':
         return makeRxAwareAttributeUpdateFn(target, info.name);
