@@ -364,7 +364,7 @@ describe('adopt', () => {
     assert.equal(div.lastElementChild.lastElementChild, hr)
   })
 
-  it.skip('adopts a text node', () => {
+  it.skip('resues an existing text node', () => {
     div.innerHTML = `<p>before</p>`
     let textNode = div.firstElementChild.firstChild
 
@@ -376,7 +376,7 @@ describe('adopt', () => {
     assert.equal(div.firstElementChild.firstChild, textNode)
   })
 
-  it('adopts a property', () => {
+  it('drops attributes which are meant to set properties', () => {
     div.innerHTML = `<div><p prop="before"></p></div>`
     let render = adopt(div)
     render`<div><p prop=${'after'}></p></div>`
