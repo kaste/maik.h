@@ -59,12 +59,11 @@ Aura.prototype.splice = function splice(start) {
 
 // uses majinbuu only if the two lists are different
 export function optimist(aura, value) {
-  var i = 0,
-    length = aura.length
+  let length = aura.length
   if (value.length !== length) {
     majinbuu(aura, value, MAX_LIST_SIZE)
   } else {
-    for (; i < length--; i++) {
+    for (let i = 0; i < length--; i++) {
       if (aura[length] !== value[length] || aura[i] !== value[i]) {
         majinbuu(aura, value, MAX_LIST_SIZE)
         return
