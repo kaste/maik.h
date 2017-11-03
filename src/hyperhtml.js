@@ -980,7 +980,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     let notes = [];
     hyperSeeker(fragment, notes, strings.slice());  // mutate alert
     // Return the mutated fragment and notes about each 'hole'
-    return {fragment, paths: notes};
+    return {fragment, notes};
   };
 
   const memoizeOnFirstArg = (fn) => {
@@ -1056,13 +1056,13 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     let info = memoizedCreateTemplateBlueprint(template, contextNode);
     if (notAdopting) {
       var fragment = importNode(info.fragment);
-      updaters = createUpdaters(fragment, info.paths);
+      updaters = createUpdaters(fragment, info.notes);
       hypers.set(contextNode, {template: template, updaters: updaters});
       update(updaters, values);
       contextNode.textContent = '';
       contextNode.appendChild(fragment);
     } else {
-      updaters = discoverUpdates(contextNode, info.fragment, info.paths);
+      updaters = discoverUpdates(contextNode, info.fragment, info.notes);
       hypers.set(contextNode, {template: template, updaters: updaters});
       update(updaters, values);
     }
