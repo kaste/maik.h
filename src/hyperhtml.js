@@ -428,7 +428,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   }
 
   // return a single node or an Array or nodes
-  function createContent(node) {
+  function extractContent(node) {
     for (var
       child,
       content = [],
@@ -1067,7 +1067,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         if (type === 'svg') {
           appendNodes(fragment, slice.call(container.childNodes));
         }
-        content = createContent(fragment);
+        content = extractContent(fragment);
       }
       return content;
     }
