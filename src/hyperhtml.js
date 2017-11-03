@@ -292,7 +292,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // ---------------------------------------------
 
   // look for attributes that contains the comment text
-  function attributesSeeker(node, paths, parts) {
+  function attributesSeeker(node, notes, strings) {
     let foundAttributes = [];
     for (var
       name, realName, attrs, attr,
@@ -320,13 +320,13 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
           // so the loop should be decreased by 1 too
           i--;
         } else {
-          realName = parts.shift().replace(/^(?:|[\S\s]*?\s)(\S+?)=['"]?$/, '$1');
+          realName = strings.shift().replace(/^(?:|[\S\s]*?\s)(\S+?)=['"]?$/, '$1');
           attrs = node.attributes;
           // fallback is needed in both jsdom
           // and in not-so-standard browsers/engines
           attr = cache[name] = attrs[realName] || attrs[realName.toLowerCase()];
           foundAttributes.push(attr);
-          paths.push(Path('attr', node, realName));
+          notes.push(Path('attr', node, realName));
         }
       }
     }
@@ -337,7 +337,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   }
 
   // walk the fragment tree in search of comments
-  function hyperSeeker(node, paths, parts) {
+  function hyperSeeker(node, notes, strings) {
     for (var
       child,
       childNodes = node.childNodes,
@@ -347,13 +347,13 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       child = childNodes[i];
       switch (child.nodeType) {
         case ELEMENT_NODE:
-          attributesSeeker(child, paths, parts);
-          hyperSeeker(child, paths, parts);
+          attributesSeeker(child, notes, strings);
+          hyperSeeker(child, notes, strings);
           break;
         case COMMENT_NODE:
           if (child.textContent === UID) {
-            parts.shift();
-            paths.push(Path('any', child));
+            strings.shift();
+            notes.push(Path('any', child));
           }
           break;
         case TEXT_NODE:
@@ -361,8 +361,8 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
             SHOULD_USE_TEXT_CONTENT.test(node.nodeName) &&
             trim.call(child.textContent) === UIDC
           ) {
-            parts.shift();
-            paths.push(Path('text', node));
+            strings.shift();
+            notes.push(Path('text', node));
           }
           break;
       }
