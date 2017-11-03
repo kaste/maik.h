@@ -687,7 +687,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   // use native .append(...childNodes) where available
   var appendNodes = 'append' in featureFragment ?
-      function (node, childNodes) {
+      function appendNodes(node, childNodes) {
         node.append.apply(node, childNodes);
       } :
       function appendNodes(node, childNodes) {
@@ -702,7 +702,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   // returns children or retrieve them in IE/Edge
   var getChildren = WK || IE ?
-      function (node) {
+      function getChildren(node) {
         for (var
           child,
           children = [],
@@ -716,12 +716,12 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         }
         return children;
       } :
-      function (node) { return node.children; };
+      function getChildren(node) { return node.children; };
 
   // return the correct node walking through a path
   // fixes IE/Edge issues with attributes and children (fixes old WebKit too)
   var getNode = IE || WK ?
-      function (parentNode, path) {
+      function getNode(parentNode, path) {
         for (var name, i = 0, length = path.length; i < length; i++) {
           name = path[i++];
           switch (name) {
@@ -735,7 +735,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         }
         return parentNode;
       } :
-      function (parentNode, path) {
+      function getNode(parentNode, path) {
         for (var i = 0, length = path.length; i < length; i++) {
           parentNode = parentNode[path[i++]][path[i]];
         }
@@ -758,7 +758,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     featureFragment.appendChild(createText(featureFragment, 'g'));
     featureFragment.appendChild(createText(featureFragment, ''));
     return featureFragment.cloneNode(true).childNodes.length === 1 ?
-      function (node) {
+      function importNode(node) {
         for (var
           clone = document.importNode(),
           childNodes = node.childNodes || [],
@@ -769,7 +769,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         }
         return clone;
       } :
-      function (fragment) {
+      function importNode(fragment) {
         return document.importNode(fragment, true);
       };
   }());
@@ -780,24 +780,24 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   // IE/Edge gotcha with comment nodes
   var nextElementSibling = IE ?
-    function (node) {
+    function nextElementSibling(node) {
       // eslint-disable-next-line no-cond-assign
       while (node = node.nextSibling) {
         if (node.nodeType === ELEMENT_NODE) return node;
       }
       return undefined;
     } :
-    function (node) { return node.nextElementSibling; };
+    function nextElementSibling(node) { return node.nextElementSibling; };
 
   var previousElementSibling = IE ?
-    function (node) {
+    function previousElementSibling(node) {
       // eslint-disable-next-line no-cond-assign
       while (node = node.previousSibling) {
        if (node.nodeType === ELEMENT_NODE) return node;
       }
       return undefined;
     } :
-    function (node) { return node.previousElementSibling; };
+    function previousElementSibling(node) { return node.previousElementSibling; };
 
   // remove all text nodes from a virtual space
   function removePreviousText(parentNode, node) {
