@@ -960,19 +960,27 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // Template related utilities
   // ---------------------------------------------
 
-  // given a unique template object
-  // create, parse, and store retrieved info
-  function createTemplateBlueprint(template, contextNode) {
-    let html = getHTML(template);
+  // Given the unique static strings of a template-tag invocation,
+  // create a blueprint fragment and notes about its dynamic parts
+  // which we can use over and over for new instances of this (template)
+  // fragment
+  function createTemplateBlueprint(strings, contextNode) {
+    let html = getHTML(strings);
     let fragment = createFragment(contextNode, html);
-    let notes = takeNotes(template, fragment);
-    return {fragment, paths: notes};
+    return processFragment(strings, fragment);
   }
 
-  const takeNotes = (strings, fragment) => {
+  /*
+    `processFragment` is generally a destructive thing. We walk the
+    initial fragment, remove all the attributes for which the user wants to
+    fill in values (in short: the dynamic attributes), and take notes about
+    every dynamic 'hole' we find.
+   */
+  const processFragment = (strings, fragment) => {
     let notes = [];
     hyperSeeker(fragment, notes, strings.slice());  // mutate alert
-    return notes;
+    // Return the mutated fragment and notes about each 'hole'
+    return {fragment, paths: notes};
   };
 
   const memoizeOnFirstArg = (fn) => {
