@@ -326,7 +326,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
           // and in not-so-standard browsers/engines
           attr = cache[name] = attrs[realName] || attrs[realName.toLowerCase()];
           foundAttributes.push(attr);
-          notes.push(Path('attr', node, realName));
+          notes.push(createNote('attr', node, realName));
         }
       }
     }
@@ -353,7 +353,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
         case COMMENT_NODE:
           if (child.textContent === UID) {
             strings.shift();
-            notes.push(Path('any', child));
+            notes.push(createNote('any', child));
           }
           break;
         case TEXT_NODE:
@@ -362,7 +362,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
             trim.call(child.textContent) === UIDC
           ) {
             strings.shift();
-            notes.push(Path('text', node));
+            notes.push(createNote('text', node));
           }
           break;
       }
@@ -584,9 +584,17 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     }
   }
 
-  // used for common path creation.
-  function Path(type, node, name) {
-    return {type: type, path: createPath(node), name: name};
+  /*
+   For each 'hole' we create a note.
+   {
+     type: String(node|attr|text),
+     path: Array<accessor, index>, // used to find the node quickly via `getNode`
+     name?: String  // the attribute name, if type is attr
+   }
+   */
+  function createNote(type, node, name) {
+    let path = createPath(node);
+    return {type, path, name};
   }
 
   // ---------------------------------------------
