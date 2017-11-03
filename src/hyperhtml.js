@@ -740,9 +740,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // [element] = {template, updates};
   var wires = new $WeakMap;
 
-  // [template] = {fragment, paths};
-  var templates = new $Map;
-
   // internal signal to switch adoption
   var notAdopting = true;
 
@@ -965,14 +962,28 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
   // given a unique template object
   // create, parse, and store retrieved info
-  function createTemplate(contextNode, template) {
+  function createTemplateBlueprint(template, contextNode) {
     var paths = [];
     var fragment = createFragment(contextNode, getHTML(template));
     var info = {fragment: fragment, paths: paths};
     hyperSeeker(fragment, paths, template.slice());
-    templates.set(template, info);
     return info;
   }
+
+  const memoizeOnFirstArg = (fn) => {
+    let cache = new $Map();
+    return (arg, ...args) => {
+      let rv = cache.get(arg);
+      if (rv === undefined) {
+        rv = fn(arg, ...args);
+        cache.set(arg, rv);
+      }
+      return rv;
+    };
+  };
+
+  const memoizedCreateTemplateBlueprint =
+    memoizeOnFirstArg(createTemplateBlueprint);
 
   // given a generic node, returns a path capable
   // of retrieving such path back again.
@@ -1029,8 +1040,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // upgrade a node to use such template for future updates
   function upgrade(contextNode, template, values) {
     let updaters;
-    var info =  templates.get(template) ||
-                createTemplate(contextNode, template);
+    let info = memoizedCreateTemplateBlueprint(template, contextNode);
     if (notAdopting) {
       var fragment = importNode(info.fragment);
       updaters = createUpdaters(fragment, info.paths);
