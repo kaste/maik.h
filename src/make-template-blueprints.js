@@ -192,7 +192,6 @@ function createPath(node) {
     node = parentNode
   }
 
-  // eslint-disable-next-line no-cond-assign
   while ((parentNode = node.parentNode)) {
     path.unshift('children', indexOf.call(getChildren(parentNode), node))
     node = parentNode

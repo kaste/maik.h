@@ -83,7 +83,6 @@ export const importNode = (function() {
 // IE/Edge gotcha with comment nodes
 export const nextElementSibling = IE
   ? function nextElementSibling(node) {
-      // eslint-disable-next-line no-cond-assign
       while ((node = node.nextSibling)) {
         if (node.nodeType === ELEMENT_NODE) return node
       }
@@ -95,7 +94,6 @@ export const nextElementSibling = IE
 
 export const previousElementSibling = IE
   ? function previousElementSibling(node) {
-      // eslint-disable-next-line no-cond-assign
       while ((node = node.previousSibling)) {
         if (node.nodeType === ELEMENT_NODE) return node
       }
