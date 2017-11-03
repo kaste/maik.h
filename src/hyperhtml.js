@@ -17,6 +17,9 @@ import {
   nextElementSibling,
 } from './dom-utils.js';
 import {IE, WK, FF} from './sniffs.js';
+import {memoizeOnFirstArg, indexOf, slice, trim, isArray} from './utils.js';
+import {$WeakMap} from './pseudo-polyfills.js';
+
 
 
 var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
@@ -314,10 +317,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // Helpers
   // ---------------------------------------------
 
-  // used to convert childNodes to Array
-  const slice = [].slice;
-  const indexOf = [].indexOf;
-
   // used to sanitize html
   var oEscape = {
     '&': '&amp;',
@@ -421,76 +420,7 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     }
   }
 
-  // ---------------------------------------------
-  // Hybrid Shims
-  // ---------------------------------------------
 
-  // WeakMap with partial UID fallback
-  var $WeakMap = typeof WeakMap === typeof $WeakMap ?
-      function () {
-        // NOT A POLYFILL: simplified ad-hoc for this library cases
-        /* istanbul ignore next */
-        return {
-          delete: function (obj) { delete obj[UID]; },
-          get: function (obj) { return obj[UID]; },
-          has: function (obj) { return UID in obj; },
-          set: function (obj, value) {
-            Object.defineProperty(obj, UID, {
-              configurable: true,
-              value: value
-            });
-          }
-        };
-      } :
-      WeakMap;
-
-  var $WeakSet = typeof WeakSet === typeof $WeakSet ?
-      function () {
-        var wm = new $WeakMap;
-        // NOT A POLYFILL: simplified ad-hoc for this library cases
-        /* istanbul ignore next */
-        return {
-          add: function (obj) { wm.set(obj, true); },
-          has: function (obj) { return wm.get(obj) === true; }
-        };
-      } :
-      WeakSet;
-
-  // Map with partial double Array fallback
-  var $Map = typeof Map === typeof $Map ?
-      function () {
-        var k = [], v = [];
-        return {
-          get: function (obj) {
-            return v[k.indexOf(obj)];
-          },
-          // being used with unique template literals
-          // there is never a case when a value is overwritten
-          // no need to check upfront for the indexOf
-          set: function (obj, value) {
-            v[k.push(obj) - 1] = value;
-          }
-        };
-      } :
-      Map;
-
-  // TODO: which browser needs these partial polyfills here?
-
-  // BB7 and webOS need this
-  var isArray = Array.isArray ||
-                (function () {
-                  var toString = {}.toString;
-                  // I once had an engine returning [array Array]
-                  // and I've got scared since!
-                  var s = toString.call([]);
-                  return function (a) {
-                    return toString.call(a) === s;
-                  };
-                }());
-
-  // older WebKit need this
-  var trim = EXPANDO.trim ||
-              function () { return this.replace(/^\s+|\s+$/g, ''); };
 
   // ---------------------------------------------
   // Shared variables
@@ -673,18 +603,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // ---------------------------------------------
   // Template related utilities
   // ---------------------------------------------
-
-  const memoizeOnFirstArg = (fn) => {
-    let cache = new $Map();
-    return (arg, ...args) => {
-      let rv = cache.get(arg);
-      if (rv === undefined) {
-        rv = fn(arg, ...args);
-        cache.set(arg, rv);
-      }
-      return rv;
-    };
-  };
 
   const memoizedCreateTemplateBlueprint =
     memoizeOnFirstArg(createTemplateBlueprint);

@@ -1,4 +1,5 @@
 import { createFragment, getChildren } from './dom-utils.js'
+import { indexOf, trim } from './utils.js'
 
 const EXPANDO = '_hyper_'
 const UID = EXPANDO + ((Math.random() * new Date()) | 0) + ';'
@@ -9,14 +10,6 @@ const TEXT_NODE = 3
 const COMMENT_NODE = 8
 
 const SHOULD_USE_TEXT_CONTENT = /^style|textarea$/i
-
-const indexOf = [].indexOf
-// older WebKit need this
-const trim =
-  ''.trim ||
-  function() {
-    return this.replace(/^\s+|\s+$/g, '')
-  }
 
 /*
   Given the unique static strings of a template-tag invocation,
