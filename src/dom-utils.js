@@ -1,6 +1,8 @@
 import { WK, IE } from './sniffs.js'
 
 const ELEMENT_NODE = 1
+const TEXT_NODE = 3
+
 const OWNER_SVG_ELEMENT = 'ownerSVGElement'
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg'
 
@@ -55,7 +57,7 @@ export const getChildren =
 
 // IE 11 has problems with cloning templates too
 // it "forgets" empty childNodes
-// herrkaste: Does it also have problems with importing nodes?
+// @kaste: Does it also have problems with importing nodes?
 export const importNode = (function() {
   featureFragment.appendChild(createText(featureFragment, 'g'))
   featureFragment.appendChild(createText(featureFragment, ''))
@@ -102,6 +104,26 @@ export const previousElementSibling = IE
   : function previousElementSibling(node) {
       return node.previousElementSibling
     }
+
+// remove all text nodes from a virtual space
+export function removePreviousText(parentNode, node) {
+  var previousSibling = node.previousSibling
+  if (previousSibling && previousSibling.nodeType === TEXT_NODE) {
+    parentNode.removeChild(previousSibling)
+    removePreviousText(parentNode, node)
+  }
+}
+
+// avoid errors on obsolete platforms
+export function insertBefore(parentNode, target, after) {
+  if (after) {
+    parentNode.insertBefore(target, after)
+  } else {
+    parentNode.appendChild(target)
+  }
+}
+
+// TODO: `createFragment` has some uniqueness, maybe put it somewhere else?
 
 // given a node, inject some html and return
 // the resulting template document fragment
@@ -166,4 +188,3 @@ export function createSVGFragment(node, html) {
   }
   return fragment
 }
-

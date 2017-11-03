@@ -15,6 +15,8 @@ import {
   createText,
   previousElementSibling,
   nextElementSibling,
+  removePreviousText,
+  insertBefore
 } from './dom-utils.js';
 import {IE, WK, FF} from './sniffs.js';
 import {memoizeOnFirstArg, indexOf, slice, trim, isArray} from './utils.js';
@@ -138,6 +140,181 @@ var hyperHTML = (function (globalDocument) {'use strict';
     }
     return this;
   }
+
+  // invokes each update function passing interpolated value
+  function update(updateFns, values) {
+    for (var i = 0, length = updateFns.length; i < length; i++) {
+      updateFns[i](values[i]);
+    }
+  }
+
+  const memoizedCreateTemplateBlueprint =
+    memoizeOnFirstArg(createTemplateBlueprint);
+
+
+  // create a template, if unknown
+  // upgrade a node to use such template for future updates
+  function upgrade(contextNode, template, values) {
+    let updaters;
+    let info = memoizedCreateTemplateBlueprint(template, contextNode);
+    if (notAdopting) {
+      var fragment = importNode(info.fragment);
+      updaters = createUpdaters(fragment, info.notes);
+      hypers.set(contextNode, {template: template, updaters: updaters});
+      update(updaters, values);
+      contextNode.textContent = '';
+      contextNode.appendChild(fragment);
+    } else {
+      updaters = discoverUpdates(contextNode, info.fragment, info.notes);
+      hypers.set(contextNode, {template: template, updaters: updaters});
+      update(updaters, values);
+    }
+  }
+
+  // given a root node and a list of paths
+  // creates an array of updates to invoke
+  // whenever the next interpolation happens
+  function createUpdaters(fragment, paths) {
+    for (var
+      info,
+      updates = [],
+      i = 0, length = paths.length;
+      i < length; i++
+    ) {
+      info = paths[i];
+      updates[i] = createUpdateFn(
+        info,
+        getNode(fragment, info.path),
+        []
+      );
+    }
+    return updates;
+  }
+
+  const makeRxAwareContentUpdateFn = rxAware(setAnyContent);
+
+  // Return function which takes a value and then performs the side-effect
+  // of updating the 'hole' in the template; (...) => (val) => IO
+  function createUpdateFn(info, target, childNodes) {
+    switch (info.type) {
+      case 'node':
+        return makeRxAwareContentUpdateFn(target, childNodes, new Aura(target, childNodes));
+      case 'attr':
+        return makeRxAwareAttributeUpdateFn(target, info.name);
+      case 'text':
+        return setTextContent(target);
+    }
+  }
+
+
+  // like createUpdates but for nodes with already a content
+  function discoverUpdates(contextNode, fragment, paths) {
+    for (var
+      info, childNodes,
+      updates = [],
+      i = 0, length = paths.length;
+      i < length; i++
+    ) {
+      childNodes = [];
+      info = paths[i];
+      updates[i] = createUpdateFn(
+        info,
+        discoverNode(contextNode, fragment, info, childNodes),
+        childNodes
+      );
+    }
+    return updates;
+  }
+
+  // given an info, tries to find out the best option
+  // to replace or update the content
+  function discoverNode(parentNode, virtual, info, childNodes) {
+    for (var
+      target = parentNode,
+      document = parentNode.ownerDocument,
+      path = info.path,
+      virtualNode = getNode(virtual, path),
+      i = 0,
+      length = path.length;
+      i < length;
+      i++
+    ) {
+      switch (path[i++]) {  // <- i++!  path is a flat array of tuples
+        case 'children':
+          target = getChildren(parentNode)[path[i]];
+          if (!target) {
+            // if the node is not there, create it
+            target = parentNode.appendChild(
+              parentNode.ownerDocument.createElement(
+                getNode(virtual, path.slice(0, i + 1)).nodeName
+              )
+            );
+
+          }
+
+          if (i === length - 1 && info.type === 'attr') {
+            target.removeAttribute(info.name);
+          }
+          parentNode = target;
+          break;
+        case 'childNodes':
+          var children = getChildren(parentNode);
+          var virtualChildren = getChildren(virtualNode.parentNode);
+          target = previousElementSibling(virtualNode);
+          var before = target ? (indexOf.call(virtualChildren, target) + 1) : -1;
+          target = nextElementSibling(virtualNode);
+          var after = target ? indexOf.call(virtualChildren, target) : -1;
+          switch (true) {
+            // `${'virtual'}` is actually resolved as `${'any'}`
+            // case before < 0 && after < 0:
+            //   after = 0;
+
+            case after < 0:
+            // `</a>${'virtual'}`
+              after = children.length;
+              break;
+            case before < 0:
+            // `${'virtual'}<b>`
+              before = 0;
+              /* fallthrough */
+            default:
+            // `</a>${'virtual'}<b>`
+              after = -(virtualChildren.length - after);
+              break;
+          }
+          childNodes.push.apply(
+            childNodes,
+            slice.call(children, before, after)
+          );
+
+          target = document.createComment(UID);
+          if (childNodes.length) {
+            insertBefore(
+              parentNode,
+              target,
+              nextElementSibling(childNodes[childNodes.length - 1])
+            );
+          } else {
+            insertBefore(
+              parentNode,
+              target,
+              slice.call(children, after)[0]
+            );
+          }
+          if (childNodes.length === 0) {
+            removePreviousText(parentNode, target);
+          }
+          break;
+      }
+    }
+    return target;
+  }
+
+
+
+  // --------------------------------------------
+  // side-effects
+  // --------------------------------------------
 
   // `<style>${'text'}</style>`
   function setTextContent(node) {
@@ -292,26 +469,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
     return {html: html};
   }
 
-  // return a single node or an Array or nodes
-  function extractContent(node) {
-    for (var
-      child,
-      content = [],
-      childNodes = node.childNodes,
-      i = 0,
-      length = childNodes.length;
-      i < length; i++
-    ) {
-      child = childNodes[i];
-      if (
-        child.nodeType === ELEMENT_NODE ||
-        trim.call(child.textContent).length !== 0
-      ) {
-        content.push(child);
-      }
-    }
-    return content.length === 1 ? content[0] : content;
-  }
 
   // use a placeholder and resolve with the right callback
   function invokeAtDistance(value, callback) {
@@ -346,25 +503,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
   function isPromise_ish(value) {
     return value != null && 'then' in value;
   }
-
-
-
-  const makeRxAwareContentUpdateFn = rxAware(setAnyContent);
-
-  // Return function which takes a value and then performs the side-effect
-  // of updating the 'hole' in the template; (...) => (val) => IO
-  function createUpdateFn(info, target, childNodes) {
-    switch (info.type) {
-      case 'node':
-        return makeRxAwareContentUpdateFn(target, childNodes, new Aura(target, childNodes));
-      case 'attr':
-        return makeRxAwareAttributeUpdateFn(target, info.name);
-      case 'text':
-        return setTextContent(target);
-    }
-  }
-
-
 
   // ---------------------------------------------
   // Shared variables
@@ -421,182 +559,7 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // Adopting Nodes
   // ---------------------------------------------
 
-  // remove all text nodes from a virtual space
-  function removePreviousText(parentNode, node) {
-    var previousSibling = node.previousSibling;
-    if (previousSibling && previousSibling.nodeType === TEXT_NODE) {
-      parentNode.removeChild(previousSibling);
-      removePreviousText(parentNode, node);
-    }
-  }
 
-  // avoid errors on obsolete platforms
-  function insertBefore(parentNode, target, after) {
-    if (after) {
-      parentNode.insertBefore(target, after);
-    } else {
-      parentNode.appendChild(target);
-    }
-  }
-
-  // given an info, tries to find out the best option
-  // to replace or update the content
-  function discoverNode(parentNode, virtual, info, childNodes) {
-    for (var
-      target = parentNode,
-      document = parentNode.ownerDocument,
-      path = info.path,
-      virtualNode = getNode(virtual, path),
-      i = 0,
-      length = path.length;
-      i < length;
-      i++
-    ) {
-      switch (path[i++]) {  // <- i++!  path is a flat array of tuples
-        case 'children':
-          target = getChildren(parentNode)[path[i]];
-          if (!target) {
-            // if the node is not there, create it
-            target = parentNode.appendChild(
-              parentNode.ownerDocument.createElement(
-                getNode(virtual, path.slice(0, i + 1)).nodeName
-              )
-            );
-
-          }
-
-          if (i === length - 1 && info.type === 'attr') {
-            target.removeAttribute(info.name);
-          }
-          parentNode = target;
-          break;
-        case 'childNodes':
-          var children = getChildren(parentNode);
-          var virtualChildren = getChildren(virtualNode.parentNode);
-          target = previousElementSibling(virtualNode);
-          var before = target ? (indexOf.call(virtualChildren, target) + 1) : -1;
-          target = nextElementSibling(virtualNode);
-          var after = target ? indexOf.call(virtualChildren, target) : -1;
-          switch (true) {
-            // `${'virtual'}` is actually resolved as `${'any'}`
-            // case before < 0 && after < 0:
-            //   after = 0;
-
-            case after < 0:
-            // `</a>${'virtual'}`
-              after = children.length;
-              break;
-            case before < 0:
-            // `${'virtual'}<b>`
-              before = 0;
-              /* fallthrough */
-            default:
-            // `</a>${'virtual'}<b>`
-              after = -(virtualChildren.length - after);
-              break;
-          }
-          childNodes.push.apply(
-            childNodes,
-            slice.call(children, before, after)
-          );
-
-          target = document.createComment(UID);
-          if (childNodes.length) {
-            insertBefore(
-              parentNode,
-              target,
-              nextElementSibling(childNodes[childNodes.length - 1])
-            );
-          } else {
-            insertBefore(
-              parentNode,
-              target,
-              slice.call(children, after)[0]
-            );
-          }
-          if (childNodes.length === 0) {
-            removePreviousText(parentNode, target);
-          }
-          break;
-      }
-    }
-    return target;
-  }
-
-  // like createUpdates but for nodes with already a content
-  function discoverUpdates(contextNode, fragment, paths) {
-    for (var
-      info, childNodes,
-      updates = [],
-      i = 0, length = paths.length;
-      i < length; i++
-    ) {
-      childNodes = [];
-      info = paths[i];
-      updates[i] = createUpdateFn(
-        info,
-        discoverNode(contextNode, fragment, info, childNodes),
-        childNodes
-      );
-    }
-    return updates;
-  }
-
-
-
-  // ---------------------------------------------
-  // Template related utilities
-  // ---------------------------------------------
-
-  const memoizedCreateTemplateBlueprint =
-    memoizeOnFirstArg(createTemplateBlueprint);
-
-
-  // given a root node and a list of paths
-  // creates an array of updates to invoke
-  // whenever the next interpolation happens
-  function createUpdaters(fragment, paths) {
-    for (var
-      info,
-      updates = [],
-      i = 0, length = paths.length;
-      i < length; i++
-    ) {
-      info = paths[i];
-      updates[i] = createUpdateFn(
-        info,
-        getNode(fragment, info.path),
-        []
-      );
-    }
-    return updates;
-  }
-
-  // invokes each update function passing interpolated value
-  function update(updateFns, values) {
-    for (var i = 0, length = updateFns.length; i < length; i++) {
-      updateFns[i](values[i]);
-    }
-  }
-
-  // create a template, if unknown
-  // upgrade a node to use such template for future updates
-  function upgrade(contextNode, template, values) {
-    let updaters;
-    let info = memoizedCreateTemplateBlueprint(template, contextNode);
-    if (notAdopting) {
-      var fragment = importNode(info.fragment);
-      updaters = createUpdaters(fragment, info.notes);
-      hypers.set(contextNode, {template: template, updaters: updaters});
-      update(updaters, values);
-      contextNode.textContent = '';
-      contextNode.appendChild(fragment);
-    } else {
-      updaters = discoverUpdates(contextNode, info.fragment, info.notes);
-      hypers.set(contextNode, {template: template, updaters: updaters});
-      update(updaters, values);
-    }
-  }
 
   // ---------------------------------------------
   // Wires
@@ -664,6 +627,28 @@ var hyperHTML = (function (globalDocument) {'use strict';
         return after();
       };
   }
+
+  // return a single node or an Array or nodes
+  function extractContent(node) {
+    for (var
+      child,
+      content = [],
+      childNodes = node.childNodes,
+      i = 0,
+      length = childNodes.length;
+      i < length; i++
+    ) {
+      child = childNodes[i];
+      if (
+        child.nodeType === ELEMENT_NODE ||
+        trim.call(child.textContent).length !== 0
+      ) {
+        content.push(child);
+      }
+    }
+    return content.length === 1 ? content[0] : content;
+  }
+
 
   // setup a weak reference if needed and return a wire by ID
   function wireWeakly(obj, type) {
