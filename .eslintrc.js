@@ -2,7 +2,7 @@ module.exports = {
     env: {
         es6: true,
         browser: true,
-        mocha: true,
+        mocha: true
     },
     extends: 'eslint:recommended',
     // parser: 'babel-eslint',
@@ -20,11 +20,11 @@ module.exports = {
         'no-unused-vars': [
             'error',
             {
-                varsIgnorePattern: '_',
+                // varsIgnorePattern: '^_',
                 argsIgnorePattern: '(^_|^ev$)'
             }
         ],
         // quotes: ['error', 'single'],
-        'semi': [1, 'never']
+        semi: [1, 'never']
     }
 }
