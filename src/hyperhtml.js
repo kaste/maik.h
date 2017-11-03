@@ -5,6 +5,19 @@ import {majinbuu} from '../node_modules/majinbuu/esm/main.js';
 import {
   makeRxAwareAttributeUpdateFn, rxAware
 } from './rx-aware-attribute-updater.js';
+import {createTemplateBlueprint} from './make-template-blueprints.js';
+import {
+  createDocumentFragment,
+  createFragment,
+  getChildren,
+  importNode,
+  appendNodes,
+  createText,
+  previousElementSibling,
+  nextElementSibling,
+} from './dom-utils.js';
+import {IE, WK, FF} from './sniffs.js';
+
 
 var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
 
@@ -94,17 +107,13 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // without assuming Node is globally available
   // since this project is used on the backend too
   var ELEMENT_NODE = 1;
-  var ATTRIBUTE_NODE = 2;
   var TEXT_NODE = 3;
-  var COMMENT_NODE = 8;
   var DOCUMENT_FRAGMENT_NODE = 11;
 
   // SVG related
   var OWNER_SVG_ELEMENT = 'ownerSVGElement';
   var SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
-  var SHOULD_USE_ATTRIBUTE = /^style$/i;
-  var SHOULD_USE_TEXT_CONTENT = /^style|textarea$/i;
   var EXPANDO = '_hyper_';
   var UID = EXPANDO + ((Math.random() * new Date) | 0) + ';';
   var UIDC = '<!--' + UID + '-->';
@@ -287,111 +296,10 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
     };
   }
 
-  // ---------------------------------------------
-  // DOM Traversing
-  // ---------------------------------------------
-
-  // look for attributes that contains the comment text
-  function attributesSeeker(node, notes, strings) {
-    let foundAttributes = [];
-    for (var
-      name, realName, attrs, attr,
-      attribute,
-      cache = Object.create(null),
-      attributes = node.attributes,
-      i = 0, length = attributes.length;
-      i < length; i++
-    ) {
-      attribute = attributes[i];
-      if (attribute.value === UID) {
-        name = attribute.name;
-        // this is an IE < 11 thing only
-        if (name in cache) {
-          // attributes with unrecognized values
-          // are duplicated, even if same attribute, across the node
-          // to fix it, you need to remove it
-          node.removeAttributeNode(attribute);
-          // put a value that won't (hopefully) bother IE
-          cache[name].value = '';
-          // and place the node back
-          node.setAttributeNode(cache[name]);
-          // this will decrease attributes count by 1
-          length--;
-          // so the loop should be decreased by 1 too
-          i--;
-        } else {
-          realName = strings.shift().replace(/^(?:|[\S\s]*?\s)(\S+?)=['"]?$/, '$1');
-          attrs = node.attributes;
-          // fallback is needed in both jsdom
-          // and in not-so-standard browsers/engines
-          attr = cache[name] = attrs[realName] || attrs[realName.toLowerCase()];
-          foundAttributes.push(attr);
-          notes.push(createNote('attr', node, realName));
-        }
-      }
-    }
-    for (let i=0, l=foundAttributes.length, attr; i<l; i++) {
-      attr = foundAttributes[i];
-      node.removeAttributeNode(attr);
-    }
-  }
-
-  // walk the fragment tree in search of comments
-  function hyperSeeker(node, notes, strings) {
-    for (var
-      child,
-      childNodes = node.childNodes,
-      length = childNodes.length,
-      i = 0; i < length; i++
-    ) {
-      child = childNodes[i];
-      switch (child.nodeType) {
-        case ELEMENT_NODE:
-          attributesSeeker(child, notes, strings);
-          hyperSeeker(child, notes, strings);
-          break;
-        case COMMENT_NODE:
-          if (child.textContent === UID) {
-            strings.shift();
-            notes.push(createNote('node', child));
-          }
-          break;
-        case TEXT_NODE:
-          if (
-            SHOULD_USE_TEXT_CONTENT.test(node.nodeName) &&
-            trim.call(child.textContent) === UIDC
-          ) {
-            strings.shift();
-            notes.push(createNote('text', node));
-          }
-          break;
-      }
-    }
-  }
 
   // ---------------------------------------------
   // Features detection / ugly UA sniffs
   // ---------------------------------------------
-  var featureFragment = createDocumentFragment(globalDocument);
-
-  // Firefox < 55 has non standard template literals.
-  // https://bugzilla.mozilla.org/show_bug.cgi?id=1108941
-  // TODO: is there any better way to feature detect this ?
-  var FF = typeof navigator === 'object' &&
-            /Firefox\/(\d+)/.test(navigator.userAgent) &&
-            parseFloat(RegExp.$1) < 55;
-
-  // If attributes order is shuffled, threat the browser differently
-  // Usually this is a well known IE only limitation but some older FF does the same.
-  var IE =  (function () {
-              var p  = globalDocument.createElement('p');
-              p.innerHTML = '<i data-i="" class=""></i>';
-              return /class/i.test(p.firstChild.attributes[0].name);
-            }());
-
-
-  // beside IE, old WebKit browsers don't have `children` in DocumentFragment
-  var WK = !('children' in featureFragment);
 
   // both Firefox < 55 and TypeScript have issues with template literals
   // this lazy defined callback should spot issues right away
@@ -446,77 +354,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       }
     }
     return content.length === 1 ? content[0] : content;
-  }
-
-  // just a minifier friendly indirection
-  function createDocumentFragment(document) {
-    return document.createDocumentFragment();
-  }
-
-  // given a node, inject some html and return
-  // the resulting template document fragment
-  function createFragment(node, html) {
-    return (
-      OWNER_SVG_ELEMENT in node ?
-        createSVGFragment :
-        createHTMLFragment
-    )(node, html);
-  }
-
-  // create fragment for HTML
-  function createHTMLFragment(node, html) {
-    let document = node.ownerDocument;
-    let container = document.createElement('template');
-    let supportsTemplate = 'content' in container;
-
-    if (supportsTemplate) {
-      container.innerHTML = html;
-      return container.content;
-    } else {
-      let fragment = createDocumentFragment(document);
-
-      // el.innerHTML = '<td></td>'; is not possible
-      // if the content is a partial internal table content
-      // it needs to be wrapped around once injected.
-      // HTMLTemplateElement does not suffer this issue.
-      let needsTableWrap = /^[^\S]*?<(col(?:group)?|t(?:head|body|foot|r|d|h))/i.test(html);
-      if (needsTableWrap) {
-        // secure the RegExp.$1 result ASAP to avoid issues
-        // in case a non-browser DOM library uses RegExp internally
-        // when HTML content is injected (basicHTML / jsdom / others...)
-        let selector = RegExp.$1;
-        container.innerHTML = '<table>' + html + '</table>';
-        appendNodes(fragment, slice.call(container.querySelectorAll(selector)));
-      } else {
-        container.innerHTML = html;
-        appendNodes(fragment, slice.call(container.childNodes));
-      }
-
-      return fragment;
-    }
-
-  }
-
-  // create a fragment for SVG
-  function createSVGFragment(node, html) {
-    var container;
-    var document = node.ownerDocument;
-    var fragment = createDocumentFragment(document);
-    if (IE || WK) {
-      container = document.createElement('div');
-      container.innerHTML = '<svg xmlns="' + SVG_NAMESPACE + '">' + html + '</svg>';
-      appendNodes(fragment, slice.call(container.firstChild.childNodes));
-    } else {
-      container = document.createElementNS(SVG_NAMESPACE, 'svg');
-      container.innerHTML = html;
-      appendNodes(fragment, slice.call(container.childNodes));
-    }
-    return fragment;
-  }
-
-  // given a node, it does what is says
-  function createText(node, text) {
-    return node.ownerDocument.createTextNode(text);
   }
 
   // use a placeholder and resolve with the right callback
@@ -582,19 +419,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
       case 'text':
         return setTextContent(target);
     }
-  }
-
-  /*
-   For each 'hole' we create a note.
-   {
-     type: String(node|attr|text),
-     path: Array<accessor, index>, // used to find the node quickly via `getNode`
-     name?: String  // the attribute name, if type is attr
-   }
-   */
-  function createNote(type, node, name) {
-    let path = createPath(node);
-    return {type, path, name};
   }
 
   // ---------------------------------------------
@@ -685,38 +509,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
           (templateObjects[key] = template);
   }
 
-  // use native .append(...childNodes) where available
-  var appendNodes = 'append' in featureFragment ?
-      function appendNodes(node, childNodes) {
-        node.append.apply(node, childNodes);
-      } :
-      function appendNodes(node, childNodes) {
-        for (var
-          i = 0,
-          length = childNodes.length;
-          i < length; i++
-        ) {
-          node.appendChild(childNodes[i]);
-        }
-      };
-
-  // returns children or retrieve them in IE/Edge
-  var getChildren = WK || IE ?
-      function getChildren(node) {
-        for (var
-          child,
-          children = [],
-          childNodes = node.childNodes,
-          j = 0, i = 0, length = childNodes.length;
-          i < length; i++
-        ) {
-          child = childNodes[i];
-          if (child.nodeType === ELEMENT_NODE)
-            children[j++] = child;
-        }
-        return children;
-      } :
-      function getChildren(node) { return node.children; };
 
   // return the correct node walking through a path
   // fixes IE/Edge issues with attributes and children (fixes old WebKit too)
@@ -751,53 +543,9 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // internal signal to switch adoption
   var notAdopting = true;
 
-  // IE 11 has problems with cloning templates too
-  // it "forgets" empty childNodes
-  // herrkaste: Does it also have problems with importing nodes?
-  var importNode = (function () {
-    featureFragment.appendChild(createText(featureFragment, 'g'));
-    featureFragment.appendChild(createText(featureFragment, ''));
-    return featureFragment.cloneNode(true).childNodes.length === 1 ?
-      function importNode(node) {
-        for (var
-          clone = document.importNode(),
-          childNodes = node.childNodes || [],
-          i = 0, length = childNodes.length;
-          i < length; i++
-        ) {
-          clone.appendChild(importNode(childNodes[i]));
-        }
-        return clone;
-      } :
-      function importNode(fragment) {
-        return document.importNode(fragment, true);
-      };
-  }());
-
   // ---------------------------------------------
   // Adopting Nodes
   // ---------------------------------------------
-
-  // IE/Edge gotcha with comment nodes
-  var nextElementSibling = IE ?
-    function nextElementSibling(node) {
-      // eslint-disable-next-line no-cond-assign
-      while (node = node.nextSibling) {
-        if (node.nodeType === ELEMENT_NODE) return node;
-      }
-      return undefined;
-    } :
-    function nextElementSibling(node) { return node.nextElementSibling; };
-
-  var previousElementSibling = IE ?
-    function previousElementSibling(node) {
-      // eslint-disable-next-line no-cond-assign
-      while (node = node.previousSibling) {
-       if (node.nodeType === ELEMENT_NODE) return node;
-      }
-      return undefined;
-    } :
-    function previousElementSibling(node) { return node.previousElementSibling; };
 
   // remove all text nodes from a virtual space
   function removePreviousText(parentNode, node) {
@@ -921,75 +669,10 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   }
 
 
-  /**
-   * The functions `findTagClose` and `getHTML` originally come from the
-   * lit-html PR https://github.com/PolymerLabs/lit-html/pull/153
-   * authored by https://github.com/jridgewell
-   *
-   * Slightly modified to actually work.
-   */
-
-  /**
-   * Finds the closing index of the last closed HTML tag.
-   * This has 3 possible return values:
-   *   - `-1`, meaning there is no tag in str.
-   *   - `string.length`, meaning the last opened tag is unclosed.
-   *   - Some positive number < str.length, meaning the index of the closing '>'.
-   */
-  function findTagClose(str) {
-    const close = str.lastIndexOf('>');
-    const open = str.indexOf('<', close + 1);
-    return open > -1 ? str.length : close;
-  }
-
-  const textMarker = UIDC;
-  const attributeMarker = UID;
-
-  const getHTML = (strings) => {
-    const l = strings.length;
-    let html = '';
-    let isTextBinding = true;
-    for (let i = 0; i < l - 1; i++) {
-      const s = strings[i];
-      html += s;
-      // We're in a text position if the previous string closed its tags.
-      // If it doesn't have any tags, then we use the previous text position
-      // state.
-      const closing = findTagClose(s);
-      isTextBinding = closing > -1 ? closing < s.length : isTextBinding;
-      html += isTextBinding ? textMarker : attributeMarker;
-    }
-    html += strings[l - 1];
-    return html;
-  };
-
 
   // ---------------------------------------------
   // Template related utilities
   // ---------------------------------------------
-
-  // Given the unique static strings of a template-tag invocation,
-  // create a blueprint fragment and notes about its dynamic parts
-  // which we can use over and over for new instances of this (template)
-  // fragment
-  function createTemplateBlueprint(strings, contextNode) {
-    let html = getHTML(strings);
-    let fragment = createFragment(contextNode, html);
-    return processFragment(strings, fragment);
-  }
-
-  /*
-    `processFragment` is generally a destructive thing. We walk the
-    initial fragment, remove all the attributes for which the user wants to
-    fill in values (in short: the dynamic attributes), and take notes about
-    every dynamic 'hole' we find.
-   */
-  const processFragment = (strings, fragment) => {
-    let notes = [];
-    hyperSeeker(fragment, notes, strings.slice());  // mutate alert
-    // Return the mutated fragment and notes about each 'hole'
-    return {fragment, notes};
-  };
 
   const memoizeOnFirstArg = (fn) => {
     let cache = new $Map();
@@ -1006,29 +689,6 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   const memoizedCreateTemplateBlueprint =
     memoizeOnFirstArg(createTemplateBlueprint);
 
-  // given a generic node, returns a path capable
-  // of retrieving such path back again.
-  // TODO: worth passing the index when available ?
-  function createPath(node) {
-    let path = [];
-    let parentNode;
-
-    if (node.nodeType === COMMENT_NODE) {
-      parentNode = node.parentNode;
-      path.unshift(
-        'childNodes',
-        indexOf.call(parentNode.childNodes, node)
-      );
-      node = parentNode;
-    }
-
-    // eslint-disable-next-line no-cond-assign
-    while(parentNode = node.parentNode) {
-      path.unshift('children', indexOf.call(getChildren(parentNode), node));
-      node = parentNode;
-    }
-    return path;
-  }
 
   // given a root node and a list of paths
   // creates an array of updates to invoke
