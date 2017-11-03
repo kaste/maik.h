@@ -963,12 +963,17 @@ var hyperHTML = (function (globalDocument, majinbuu) {'use strict';
   // given a unique template object
   // create, parse, and store retrieved info
   function createTemplateBlueprint(template, contextNode) {
-    var paths = [];
-    var fragment = createFragment(contextNode, getHTML(template));
-    var info = {fragment: fragment, paths: paths};
-    hyperSeeker(fragment, paths, template.slice());
-    return info;
+    let html = getHTML(template);
+    let fragment = createFragment(contextNode, html);
+    let notes = takeNotes(template, fragment);
+    return {fragment, paths: notes};
   }
+
+  const takeNotes = (strings, fragment) => {
+    let notes = [];
+    hyperSeeker(fragment, notes, strings.slice());  // mutate alert
+    return notes;
+  };
 
   const memoizeOnFirstArg = (fn) => {
     let cache = new $Map();
