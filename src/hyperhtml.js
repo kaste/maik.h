@@ -62,9 +62,9 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // import an already live DOM structure
   // described as TL
   hyper.adopt = function adopt(node) {
-    return function () {
+    return function (strings, ...values) {
       notAdopting = false;
-      render.apply(node, arguments);
+      render(node, strings, ...values);
       notAdopting = true;
       return node;
     };
@@ -73,7 +73,9 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // hyper.bind(el) ⚡️
   // render TL inside a DOM node used as context
   hyper.bind = bind;
-  function bind(context) { return render.bind(context); }
+  function bind(context) {
+    return render.bind(null, context);
+  }
 
   // hyper.define('transformer', callback) 🌀
   hyper.define = function define(transformer, callback) {
@@ -130,15 +132,15 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // ---------------------------------------------
 
   // entry point for all TL => DOM operations
-  function render(template, ...values) {
-    var hyper = hypers.get(this);
+  function render(contextNode, template, ...values) {
+    var hyper = hypers.get(contextNode);
     template = TL(template);
     if (!hyper || hyper.template !== template) {
-      upgrade(this, template, values);
+      upgrade(contextNode, template, values);
     } else {
       update(hyper.updaters, values);
     }
-    return this;
+    return contextNode;
   }
 
   // invokes each update function passing interpolated value
