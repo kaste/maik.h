@@ -62,9 +62,10 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // import an already live DOM structure
   // described as TL
   hyper.adopt = function adopt(node) {
+    let finalSideEffect = () => node;
     return function (strings, ...values) {
       notAdopting = false;
-      render(node, strings, ...values);
+      render(node, finalSideEffect, strings, ...values);
       notAdopting = true;
       return node;
     };
@@ -74,7 +75,8 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // render TL inside a DOM node used as context
   hyper.bind = bind;
   function bind(context) {
-    return render.bind(null, context);
+    let finalSideEffect = lruCacheOne(replaceNodeContent.bind(null, context));
+    return render.bind(null, context, finalSideEffect);
   }
 
   // hyper.define('transformer', callback) 🌀
@@ -132,11 +134,14 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // ---------------------------------------------
 
   // entry point for all TL => DOM operations
-  function render(contextNode, strings, ...values) {
+  function render(contextNode, finalSideEffect, strings, ...values) {
     var hyper = hypers.get(contextNode);
     strings = TL(strings);
     if (!hyper || hyper.strings !== strings) {
-      upgrade(contextNode, strings, values);
+      let {fragment, updaters} = upgrade(contextNode, strings);
+      hypers.set(contextNode, {strings, updaters, fragment});
+      update(updaters, values);
+      finalSideEffect(fragment);
     } else {
       update(hyper.updaters, values);
     }
@@ -165,24 +170,33 @@ var hyperHTML = (function (globalDocument) {'use strict';
     return {updaters};
   };
 
+  const replaceNodeContent = (node, fragment) => {
+    node.textContent = '';
+    node.appendChild(fragment);
+    return node;
+  };
+
+  const lruCacheOne = (fn) => {
+    let lastIn, lastOut;
+    return (arg, ...args) => {
+      if (lastIn === arg) {
+        return lastOut;
+      }
+      let curOut = fn(arg, ...args);
+      lastIn = arg;
+      lastOut = curOut;
+      return curOut;
+    };
+  };
+
   // create a template, if unknown
   // upgrade a node to use such template for future updates
-  function upgrade(contextNode, strings, values) {
-    let updaters;
-    let info = memoizedCreateTemplateBlueprint(strings, contextNode);
+  function upgrade(contextNode, strings) {
+    let blueprint = memoizedCreateTemplateBlueprint(strings, contextNode);
     if (notAdopting) {
-      let {fragment, updaters} = instantiateBlueprint(info);
-
-      hypers.set(contextNode, {strings, updaters});
-
-      update(updaters, values);
-      contextNode.textContent = '';
-      contextNode.appendChild(fragment);
+      return instantiateBlueprint(blueprint);
     } else {
-      let {updaters} = adoptBlueprint(contextNode, info);
-
-      hypers.set(contextNode, {strings, updaters});
-      update(updaters, values);
+      return adoptBlueprint(contextNode, blueprint);
     }
   }
 
