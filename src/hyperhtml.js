@@ -63,9 +63,10 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // described as TL
   hyper.adopt = function adopt(node) {
     let finalSideEffect = () => node;
+    let upgrader = memoizeOnFirstArg(upgrade);
     return function (strings, ...values) {
       notAdopting = false;
-      render(node, finalSideEffect, strings, ...values);
+      render(node, upgrader, finalSideEffect, strings, ...values);
       notAdopting = true;
       return node;
     };
@@ -76,7 +77,8 @@ var hyperHTML = (function (globalDocument) {'use strict';
   hyper.bind = bind;
   function bind(context) {
     let finalSideEffect = lruCacheOne(replaceNodeContent.bind(null, context));
-    return render.bind(null, context, finalSideEffect);
+    let upgrader = memoizeOnFirstArg(upgrade);
+    return render.bind(null, context, upgrader, finalSideEffect);
   }
 
   // hyper.define('transformer', callback) 🌀
@@ -134,18 +136,13 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // ---------------------------------------------
 
   // entry point for all TL => DOM operations
-  function render(contextNode, finalSideEffect, strings, ...values) {
-    var hyper = hypers.get(contextNode);
+  function render(
+    contextNode, memoizedUpgrader, finalSideEffect, strings, ...values
+  ) {
     strings = TL(strings);
-    if (!hyper || hyper.strings !== strings) {
-      let {fragment, updaters} = upgrade(contextNode, strings);
-      hypers.set(contextNode, {strings, updaters, fragment});
-      update(updaters, values);
-      finalSideEffect(fragment);
-    } else {
-      update(hyper.updaters, values);
-    }
-    return contextNode;
+    let {fragment, updaters} = memoizedUpgrader(strings, contextNode);
+    update(updaters, values);
+    return finalSideEffect(fragment);
   }
 
   // invokes each update function passing interpolated value
@@ -189,9 +186,10 @@ var hyperHTML = (function (globalDocument) {'use strict';
     };
   };
 
+
   // create a template, if unknown
   // upgrade a node to use such template for future updates
-  function upgrade(contextNode, strings) {
+  function upgrade(strings, contextNode) {
     let blueprint = memoizedCreateTemplateBlueprint(strings, contextNode);
     if (notAdopting) {
       return instantiateBlueprint(blueprint);
@@ -575,8 +573,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
         return parentNode;
       };
 
-  // [element] = {template, updates};
-  var hypers = new $WeakMap;
 
   // [element] = {template, updates};
   var wires = new $WeakMap;

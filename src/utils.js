@@ -1,7 +1,7 @@
-import { $Map } from './pseudo-polyfills.js'
+import { $WeakMap } from './pseudo-polyfills.js'
 
 export const memoizeOnFirstArg = fn => {
-  let cache = new $Map()
+  let cache = new $WeakMap()
   return (arg, ...args) => {
     let rv = cache.get(arg)
     if (rv === undefined) {

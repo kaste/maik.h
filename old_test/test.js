@@ -410,10 +410,11 @@ tressa.async(function (done) {
   if (SKIP_ADOPT) return;
   tressa.log('## hyperHTML.wire(node, "adopt")');
   let wrap = document.createElement('div');
+  let render = hyperHTML.adopt(wrap);
   wrap.innerHTML = '<ul><li>before</li></ul>';
   let items = [{text: 'first'}];
   let li = wrap.querySelector('li');
-  let result = hyperHTML.adopt(wrap)`<ul>${
+  let result = render`<ul>${
     items.map(item => hyperHTML.wire(item, 'adopt')`
       <li> ${item.text} </li>
     `)
@@ -425,7 +426,7 @@ tressa.async(function (done) {
     /<ul><li>first<!--.+?--><\/li><!--.+?--><\/ul>/.test(result.innerHTML),
     'one element can be adopted'
   );
-  result = hyperHTML.adopt(wrap)`<ul>${
+  result = render`<ul>${
     items.map(item => hyperHTML.wire(item, 'adopt')`
       <li> ${item.text} </li>
     `)
@@ -437,9 +438,12 @@ tressa.async(function (done) {
     /<ul><li>first<!--.+?--><\/li><!--.+?--><\/ul>/.test(result.innerHTML),
     'even after multiple passes'
   );
+
+
   wrap = document.createElement('div');
+  render = hyperHTML.adopt(wrap);
   wrap.innerHTML = '<ul></ul>';
-  result = hyperHTML.adopt(wrap)`<ul>${
+  result = render`<ul>${
     [{text: 'new'}, {text: 'nodes'}].map(item => hyperHTML.wire(item, 'adopt')`
       <li> ${item.text} </li>
     `)
@@ -452,12 +456,13 @@ tressa.async(function (done) {
   );
 
   wrap = document.createElement('div');
+  render = hyperHTML.adopt(wrap);
   wrap.innerHTML = '<p></p><hr>';
-  result = hyperHTML.adopt(wrap)`<p></p>${
+  result = render`<p></p>${
     hyperHTML.wire(items[0], 'adopt')`<span> ${items[0].text} </span>`
   }<hr>`;
   let lastResult = result.innerHTML;
-  result = hyperHTML.adopt(wrap)`<p></p>${
+  result = render`<p></p>${
     items.map(item => hyperHTML.wire(item, 'adopt')`<span> ${item.text} </span>`)
   }<hr>`;
   tressa.assert(
@@ -589,8 +594,9 @@ tressa.async(function (done) {
 .then(function () {
   tressa.log('## no WebKit backfire');
   var div = document.createElement('div');
+  let render = hyperHTML.bind(div);
   function update(value, attr) {
-    return hyperHTML.bind(div)`
+    return render`
     <input value="${value}" shaka$="${attr}">`;
   }
   var input = update('', '').firstElementChild;
