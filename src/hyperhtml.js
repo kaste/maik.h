@@ -591,12 +591,11 @@ var hyperHTML = (function (globalDocument) {'use strict';
     }
 
     return type === 'adopt' ?
-      function adopt(statics) {
-        var args = arguments;
-        statics = TL(statics);
-        if (template !== statics) {
+      function adopt(strings, ...values) {
+        strings = TL(strings);
+        if (template !== strings) {
           setup = true;
-          template = statics;
+          template = strings;
           adopter = function (parentNode, children, i) {
             if (setup) {
               if (i < children.length) {
@@ -612,20 +611,20 @@ var hyperHTML = (function (globalDocument) {'use strict';
                 before(parentNode.ownerDocument);
               }
             }
-            render.apply(null, args);
+            render(strings, ...values);
             return after();
           };
         }
         return adopter;
       } :
-      function update(statics) {
-        statics = TL(statics);
-        if (template !== statics) {
+      function update(strings, ...values) {
+        strings = TL(strings);
+        if (template !== strings) {
           setup = true;
-          template = statics;
+          template = strings;
           before(hyper.document);
         }
-        render.apply(null, arguments);
+        render(strings, ...values);
         return after();
       };
   }
