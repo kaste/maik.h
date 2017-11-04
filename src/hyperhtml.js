@@ -178,19 +178,11 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // given a root node and a list of paths
   // creates an array of updates to invoke
   // whenever the next interpolation happens
-  function createUpdaters(fragment, paths) {
-    for (var
-      info,
-      updates = [],
-      i = 0, length = paths.length;
-      i < length; i++
-    ) {
-      info = paths[i];
-      updates[i] = createUpdateFn(
-        info,
-        getNode(fragment, info.path),
-        []
-      );
+  function createUpdaters(fragment, parts) {
+    let updates = [];
+    for (var i = 0, length = parts.length; i < length; i++) {
+      let part = parts[i];
+      updates[i] = createUpdateFn(part, getNode(fragment, part.path), []);
     }
     return updates;
   }
@@ -199,12 +191,12 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
   // Return function which takes a value and then performs the side-effect
   // of updating the 'hole' in the template; (...) => (val) => IO
-  function createUpdateFn(info, target, childNodes) {
-    switch (info.type) {
+  function createUpdateFn(part, target, childNodes) {
+    switch (part.type) {
       case 'node':
         return makeRxAwareContentUpdateFn(target, childNodes, new Aura(target, childNodes));
       case 'attr':
-        return makeRxAwareAttributeUpdateFn(target, info.name);
+        return makeRxAwareAttributeUpdateFn(target, part.name);
       case 'text':
         return setTextContent(target);
     }
@@ -212,18 +204,14 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
 
   // like createUpdates but for nodes with already a content
-  function discoverUpdates(contextNode, fragment, paths) {
-    for (var
-      info, childNodes,
-      updates = [],
-      i = 0, length = paths.length;
-      i < length; i++
-    ) {
-      childNodes = [];
-      info = paths[i];
+  function discoverUpdates(contextNode, fragment, parts) {
+    let updates = [];
+    for (var i = 0, length = parts.length; i < length; i++) {
+      let childNodes = [];
+      let part = parts[i];
       updates[i] = createUpdateFn(
-        info,
-        discoverNode(contextNode, fragment, info, childNodes),
+        part,
+        discoverNode(contextNode, fragment, part, childNodes),
         childNodes
       );
     }
@@ -232,11 +220,11 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
   // given an info, tries to find out the best option
   // to replace or update the content
-  function discoverNode(parentNode, virtual, info, childNodes) {
+  function discoverNode(parentNode, virtual, part, childNodes) {
     for (var
       target = parentNode,
       document = parentNode.ownerDocument,
-      path = info.path,
+      path = part.path,
       virtualNode = getNode(virtual, path),
       i = 0,
       length = path.length;
@@ -256,8 +244,8 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
           }
 
-          if (i === length - 1 && info.type === 'attr') {
-            target.removeAttribute(info.name);
+          if (i === length - 1 && part.type === 'attr') {
+            target.removeAttribute(part.name);
           }
           parentNode = target;
           break;
