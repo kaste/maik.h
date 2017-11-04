@@ -132,11 +132,11 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // ---------------------------------------------
 
   // entry point for all TL => DOM operations
-  function render(contextNode, template, ...values) {
+  function render(contextNode, strings, ...values) {
     var hyper = hypers.get(contextNode);
-    template = TL(template);
-    if (!hyper || hyper.template !== template) {
-      upgrade(contextNode, template, values);
+    strings = TL(strings);
+    if (!hyper || hyper.strings !== strings) {
+      upgrade(contextNode, strings, values);
     } else {
       update(hyper.updaters, values);
     }
@@ -156,19 +156,19 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
   // create a template, if unknown
   // upgrade a node to use such template for future updates
-  function upgrade(contextNode, template, values) {
+  function upgrade(contextNode, strings, values) {
     let updaters;
-    let info = memoizedCreateTemplateBlueprint(template, contextNode);
+    let info = memoizedCreateTemplateBlueprint(strings, contextNode);
     if (notAdopting) {
       var fragment = importNode(info.fragment);
       updaters = createUpdaters(fragment, info.notes);
-      hypers.set(contextNode, {template: template, updaters: updaters});
+      hypers.set(contextNode, {strings, updaters});
       update(updaters, values);
       contextNode.textContent = '';
       contextNode.appendChild(fragment);
     } else {
       updaters = discoverUpdates(contextNode, info.fragment, info.notes);
-      hypers.set(contextNode, {template: template, updaters: updaters});
+      hypers.set(contextNode, {strings, updaters});
       update(updaters, values);
     }
   }
