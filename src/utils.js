@@ -12,6 +12,19 @@ export const memoizeOnFirstArg = fn => {
   }
 }
 
+export const lruCacheOne = fn => {
+  let lastIn, lastOut
+  return (arg, ...args) => {
+    if (lastIn === arg) {
+      return lastOut
+    }
+    let curOut = fn(arg, ...args)
+    lastIn = arg
+    lastOut = curOut
+    return curOut
+  }
+}
+
 // used to convert childNodes to Array
 export const slice = [].slice
 export const indexOf = [].indexOf

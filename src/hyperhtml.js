@@ -19,7 +19,7 @@ import {
   insertBefore
 } from './dom-utils.js';
 import {IE, WK, FF} from './sniffs.js';
-import {memoizeOnFirstArg, indexOf, slice, trim, isArray} from './utils.js';
+import {memoizeOnFirstArg, lruCacheOne, indexOf, slice, trim, isArray} from './utils.js';
 import {$WeakMap} from './pseudo-polyfills.js';
 
 
@@ -63,13 +63,8 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // described as TL
   hyper.adopt = function adopt(node) {
     let finalSideEffect = () => node;
-    let upgrader = memoizeOnFirstArg(upgrade);
-    return function (strings, ...values) {
-      notAdopting = false;
-      render(node, upgrader, finalSideEffect, strings, ...values);
-      notAdopting = true;
-      return node;
-    };
+    let upgrader = memoizeOnFirstArg(upgrade.bind(null, adoptBlueprint));
+    return render.bind(null, node, upgrader, finalSideEffect);
   };
 
   // hyper.bind(el) ⚡️
@@ -77,7 +72,7 @@ var hyperHTML = (function (globalDocument) {'use strict';
   hyper.bind = bind;
   function bind(context) {
     let finalSideEffect = lruCacheOne(replaceNodeContent.bind(null, context));
-    let upgrader = memoizeOnFirstArg(upgrade);
+    let upgrader = memoizeOnFirstArg(upgrade.bind(null, instantiateBlueprint));
     return render.bind(null, context, upgrader, finalSideEffect);
   }
 
@@ -161,7 +156,7 @@ var hyperHTML = (function (globalDocument) {'use strict';
     return {fragment, updaters};
   };
 
-  const adoptBlueprint = (contextNode, blueprint) => {
+  const adoptBlueprint = (blueprint, contextNode) => {
     let updaters = discoverUpdates(
       contextNode, blueprint.fragment, blueprint.notes);
     return {updaters};
@@ -173,29 +168,11 @@ var hyperHTML = (function (globalDocument) {'use strict';
     return node;
   };
 
-  const lruCacheOne = (fn) => {
-    let lastIn, lastOut;
-    return (arg, ...args) => {
-      if (lastIn === arg) {
-        return lastOut;
-      }
-      let curOut = fn(arg, ...args);
-      lastIn = arg;
-      lastOut = curOut;
-      return curOut;
-    };
-  };
-
-
   // create a template, if unknown
   // upgrade a node to use such template for future updates
-  function upgrade(strings, contextNode) {
+  function upgrade(next, strings, contextNode) {
     let blueprint = memoizedCreateTemplateBlueprint(strings, contextNode);
-    if (notAdopting) {
-      return instantiateBlueprint(blueprint);
-    } else {
-      return adoptBlueprint(contextNode, blueprint);
-    }
+    return next(blueprint, contextNode);
   }
 
   // given a root node and a list of paths
@@ -574,21 +551,14 @@ var hyperHTML = (function (globalDocument) {'use strict';
       };
 
 
-  // [element] = {template, updates};
-  var wires = new $WeakMap;
-
-  // internal signal to switch adoption
-  var notAdopting = true;
-
-  // ---------------------------------------------
-  // Adopting Nodes
-  // ---------------------------------------------
-
-
 
   // ---------------------------------------------
   // Wires
   // ---------------------------------------------
+
+
+  // [element] = {template, updates};
+  var wires = new $WeakMap;
 
   // create a new wire for generic DOM content
   function wireContent(type) {
@@ -599,6 +569,7 @@ var hyperHTML = (function (globalDocument) {'use strict';
       container = type === 'svg' ?
         document.createElementNS(SVG_NAMESPACE, 'svg') :
         fragment;
+
       render = bind(container);
     }
 
@@ -628,11 +599,16 @@ var hyperHTML = (function (globalDocument) {'use strict';
                   childNodes: [container],
                   children: [container]
                 };
-                render = hyper.adopt(fragment);
               } else {
-                if (OWNER_SVG_ELEMENT in parentNode) type = 'svg';
+                if (OWNER_SVG_ELEMENT in parentNode) {
+                  type = 'svg';
+                }
+                // FIXME: mutate alert! `before` sets render to
+                // `bind(container)`, which we undo below. It also sets the
+                // fragment, which we take.
                 before(parentNode.ownerDocument);
               }
+              render = hyper.adopt(fragment);
             }
             render(strings, ...values);
             return after();
