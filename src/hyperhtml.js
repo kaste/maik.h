@@ -153,6 +153,17 @@ var hyperHTML = (function (globalDocument) {'use strict';
   const memoizedCreateTemplateBlueprint =
     memoizeOnFirstArg(createTemplateBlueprint);
 
+  const instantiateBlueprint = (blueprint) => {
+    let fragment = importNode(blueprint.fragment);
+    let updaters = createUpdaters(fragment, blueprint.notes);
+    return {fragment, updaters};
+  };
+
+  const adoptBlueprint = (contextNode, blueprint) => {
+    let updaters = discoverUpdates(
+      contextNode, blueprint.fragment, blueprint.notes);
+    return {updaters};
+  };
 
   // create a template, if unknown
   // upgrade a node to use such template for future updates
@@ -160,14 +171,16 @@ var hyperHTML = (function (globalDocument) {'use strict';
     let updaters;
     let info = memoizedCreateTemplateBlueprint(strings, contextNode);
     if (notAdopting) {
-      var fragment = importNode(info.fragment);
-      updaters = createUpdaters(fragment, info.notes);
+      let {fragment, updaters} = instantiateBlueprint(info);
+
       hypers.set(contextNode, {strings, updaters});
+
       update(updaters, values);
       contextNode.textContent = '';
       contextNode.appendChild(fragment);
     } else {
-      updaters = discoverUpdates(contextNode, info.fragment, info.notes);
+      let {updaters} = adoptBlueprint(contextNode, info);
+
       hypers.set(contextNode, {strings, updaters});
       update(updaters, values);
     }
