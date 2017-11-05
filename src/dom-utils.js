@@ -131,58 +131,62 @@ export function createFragment(node, html) {
     : createHTMLFragment)(node, html)
 }
 
+const SUPPORTS_TEMPLATE = 'content' in document.createElement('template')
+
 // create fragment for HTML
-export function createHTMLFragment(node, html) {
-  let document = node.ownerDocument
-  let container = document.createElement('template')
-  let supportsTemplate = 'content' in container
-
-  if (supportsTemplate) {
-    container.innerHTML = html
-    return container.content
-  } else {
-    let fragment = createDocumentFragment(document)
-
-    // el.innerHTML = '<td></td>'; is not possible
-    // if the content is a partial internal table content
-    // it needs to be wrapped around once injected.
-    // HTMLTemplateElement does not suffer this issue.
-    let needsTableWrap = /^[^\S]*?<(col(?:group)?|t(?:head|body|foot|r|d|h))/i.test(
-      html
-    )
-    if (needsTableWrap) {
-      // secure the RegExp.$1 result ASAP to avoid issues
-      // in case a non-browser DOM library uses RegExp internally
-      // when HTML content is injected (basicHTML / jsdom / others...)
-      let selector = RegExp.$1
-      container.innerHTML = '<table>' + html + '</table>'
-      appendNodes(
-        fragment,
-        slice.call(container.querySelectorAll(selector))
-      )
-    } else {
+export const createHTMLFragment = SUPPORTS_TEMPLATE
+  ? function createHTMLFragment(node, html) {
+      let document = node.ownerDocument
+      let container = document.createElement('template')
       container.innerHTML = html
-      appendNodes(fragment, slice.call(container.childNodes))
+      return container.content
+    }
+  : function createHTMLFragmentLegacy(node, html) {
+      let document = node.ownerDocument
+      let fragment = createDocumentFragment(document)
+      let container = document.createElement('div')
+
+      // el.innerHTML = '<td></td>'; is not possible
+      // if the content is a partial internal table content
+      // it needs to be wrapped around once injected.
+      // HTMLTemplateElement does not suffer this issue.
+      let needsTableWrap = /^[^\S]*?<(col(?:group)?|t(?:head|body|foot|r|d|h))/i.test(
+        html
+      )
+
+      if (needsTableWrap) {
+        // secure the RegExp.$1 result ASAP to avoid issues
+        // in case a non-browser DOM library uses RegExp internally
+        // when HTML content is injected (basicHTML / jsdom / others...)
+        let selector = RegExp.$1
+        container.innerHTML = '<table>' + html + '</table>'
+        appendNodes(
+          fragment,
+          slice.call(container.querySelectorAll(selector))
+        )
+      } else {
+        container.innerHTML = html
+        appendNodes(fragment, slice.call(container.childNodes))
+      }
+
+      return fragment
     }
 
-    return fragment
-  }
-}
-
 // create a fragment for SVG
-export function createSVGFragment(node, html) {
-  var container
-  var document = node.ownerDocument
-  var fragment = createDocumentFragment(document)
-  if (IE || WK) {
-    container = document.createElement('div')
-    container.innerHTML =
-      '<svg xmlns="' + SVG_NAMESPACE + '">' + html + '</svg>'
-    appendNodes(fragment, slice.call(container.firstChild.childNodes))
-  } else {
-    container = document.createElementNS(SVG_NAMESPACE, 'svg')
-    container.innerHTML = html
-    appendNodes(fragment, slice.call(container.childNodes))
-  }
-  return fragment
-}
+export const createSVGFragment = SUPPORTS_TEMPLATE
+  ? function createSVGFragment(node, html) {
+      let document = node.ownerDocument
+      let container = document.createElement('template')
+      let svgElement = document.createElementNS(SVG_NAMESPACE, 'svg')
+      svgElement.innerHTML = html
+      appendNodes(container.content, slice.call(svgElement.childNodes))
+      return container.content
+    }
+  : function createSVGFragmentLegacy(node, html) {
+      var fragment = createDocumentFragment(document)
+      let container = document.createElement('div')
+      container.innerHTML =
+        '<svg xmlns="' + SVG_NAMESPACE + '">' + html + '</svg>'
+      appendNodes(fragment, slice.call(container.firstChild.childNodes))
+      return fragment
+    }
