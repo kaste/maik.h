@@ -287,7 +287,7 @@ describe('bugs', () => {
     assert.equal(`<x-foo><p>Hello</p></x-foo>`, div.innerHTML)
   })
 
-  it('does not upgrade v1 custom elements with hyper attributes', () => {})
+  it('does not upgrade v1 custom elements with hyper attributes')
 })
 
 describe('adopt', () => {
