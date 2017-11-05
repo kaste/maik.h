@@ -544,12 +544,41 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // Wires
   // ---------------------------------------------
 
+  // FIXME:
+  // Currently `render` still needs a contextNode. This is for two reasons:
+  // First, it uses `contextNode.ownerDocument` instead of a global one.
+  // Second, it uses the type of this node to tell if it should render svg or
+  // html.
+  // The first rules becomes obsolete obviously bc we just use `document` here.
+  const htmlContextNode = document.createElement('div');
+  const svgContextNode = document.createElementNS(SVG_NAMESPACE, 'svg');
+
+  const wireHtml = () => {
+    let finalSideEffect = lruCacheOne(extractContent);
+    let upgrader = memoizeOnFirstArg(upgrade.bind(null, instantiateBlueprint));
+    return render.bind(null, htmlContextNode, upgrader, finalSideEffect);
+  };
+  hyper.wireHtml = wireHtml;
+
+  const wireSvg = () => {
+    let finalSideEffect = lruCacheOne(extractContent);
+    let upgrader = memoizeOnFirstArg(upgrade.bind(null, instantiateBlueprint));
+    return render.bind(null, svgContextNode, upgrader, finalSideEffect);
+  };
+  hyper.wireSvg = wireSvg;
 
   // [element] = {template, updates};
   var wires = new $WeakMap;
 
   // create a new wire for generic DOM content
   function wireContent(type) {
+    switch (type) {
+      case 'html':
+        return wireHtml();
+      case 'svg':
+        return wireSvg();
+    }
+
     var adopter, content, container, fragment, render, setup, template;
 
     function before(document) {
@@ -618,25 +647,18 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
   // return a single node or an Array or nodes
   function extractContent(node) {
-    for (var
-      child,
-      content = [],
-      childNodes = node.childNodes,
-      i = 0,
-      length = childNodes.length;
-      i < length; i++
-    ) {
-      child = childNodes[i];
-      if (
-        child.nodeType === ELEMENT_NODE ||
-        trim.call(child.textContent).length !== 0
-      ) {
+    let content = [];
+    let childNodes = node.childNodes;
+
+    for (var i = 0, length = childNodes.length; i < length; i++) {
+      let child = childNodes[i];
+      if (child.nodeType === ELEMENT_NODE ||
+          trim.call(child.textContent).length !== 0) {
         content.push(child);
       }
     }
     return content.length === 1 ? content[0] : content;
   }
-
 
   // setup a weak reference if needed and return a wire by ID
   function wireWeakly(obj, type) {
@@ -663,5 +685,5 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
 export default hyperHTML;
 
-const {bind, escape, wire, adopt} = hyperHTML;
-export {bind, escape, wire, adopt};
+const {bind, escape, wire, wireHtml, wireSvg, adopt} = hyperHTML;
+export {bind, escape, wire, wireHtml, wireSvg, adopt};
