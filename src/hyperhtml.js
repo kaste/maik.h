@@ -19,7 +19,11 @@ import {
   insertBefore
 } from './dom-utils.js';
 import {IE, WK, FF} from './sniffs.js';
-import {memoizeOnFirstArg, lruCacheOne, indexOf, slice, trim, isArray} from './utils.js';
+import {
+  memoizeOnFirstArg,
+  lruCacheOne,
+  flatten,
+  indexOf, slice, trim, isArray} from './utils.js';
 import {$WeakMap} from './pseudo-polyfills.js';
 
 
@@ -396,11 +400,11 @@ var hyperHTML = (function (globalDocument) {'use strict';
                   for (var i = 0; i < length; i++) {
                     value[i] = value[i](parentNode, childNodes, i);
                   }
-                  anyContent(value.concat.apply([], value));
+                  anyContent(flatten(value));
                   break;
                 case 'object':
                   if (isArray(value[0])) {
-                    value = value.concat.apply([], value);
+                    value = flatten(value);
                   }
                   if (isPromise_ish(value[0])) {
                     Promise.all(value).then(anyContent);

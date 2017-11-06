@@ -25,6 +25,8 @@ export const lruCacheOne = fn => {
   }
 }
 
+export const flatten = array => [].concat(...array)
+
 // used to convert childNodes to Array
 export const slice = [].slice
 export const indexOf = [].indexOf
