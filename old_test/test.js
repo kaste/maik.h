@@ -75,7 +75,7 @@ tressa.async(function (done) {
     var render = hyperHTML.bind(div);
     var html = update('hello').innerHTML;
     function update(text) {
-      return render`<p>${['<strong>' + text + '</strong>']}</p>`;
+      return render`<p>${{html: '<strong>' + text + '</strong>'}}</p>`;
     }
     function compare(html) {
       return /^<p><strong>\w+<\/strong><!--.+?--><\/p>$/i.test(html);
@@ -123,7 +123,7 @@ tressa.async(function (done) {
     var render = hyperHTML.bind(div);
     var html = update('hello').innerHTML;
     function update(text) {
-      return render`<p>${{any: ['<em>' + text + '</em>']}}</p>`;
+      return render`<p>${{html: ['<em>' + text + '</em>']}}</p>`;
     }
     function compare(html) {
       return /^<p><em>\w+<\/em><!--.+?--><\/p>$/i.test(html);
@@ -403,7 +403,7 @@ tressa.async(function (done) {
   hyperHTML.adopt(wrap)`${'virtual'}<hr>`;
   tressa.assert(/^virtual<!--.+?--><hr>$/.test(wrap.innerHTML), '${\'virtual\'}<hr>`');
   wrap.innerHTML = '<br><i>before</i><hr>';
-  hyperHTML.adopt(wrap)`<br>${['<strong>after</strong>']}<hr>`;
+  hyperHTML.adopt(wrap)`<br>${{html: '<strong>after</strong>'}}<hr>`;
   tressa.assert(/^<br><strong>after<\/strong><!--.+?--><hr>$/.test(wrap.innerHTML), '<br>${\'<strong>after</strong>\'}<hr>');
 })
 .then(function () {

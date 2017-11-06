@@ -70,7 +70,7 @@ export const setAnyContent = (node, childNodes, aura) => {
               case 'string':
               case 'number':
               case 'boolean':
-                anyContent({ html: value })
+                anyContent(value.join(''))
                 break
               case 'function':
                 var parentNode = node.parentNode

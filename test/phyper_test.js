@@ -1,7 +1,7 @@
 /* global chai */
 
 import { bind, wire, adopt } from '../src/hyperhtml.js'
-import { matchInnerHTML, xfail } from './utils.js'
+import { matchInnerHTML } from './utils.js'
 
 const { assert } = chai
 
@@ -131,9 +131,7 @@ describe('bind/render', () => {
     it('resists XSS by escaping html', function() {
       let render = bind(div)
       render`<p>${['<em>a</em>']}</p>`
-      xfail(this, () => {
-        matchInnerHTML(`<p>${'&lt;em&gt;a&lt;/em&gt;'}</p>`, div)
-      })
+      matchInnerHTML(`<p>${'&lt;em&gt;a&lt;/em&gt;'}</p>`, div)
     })
 
     // IMO this is the only relevant feature here
@@ -313,9 +311,9 @@ describe('adopt', () => {
     div.innerHTML = innerHTML
 
     let innerDiv = div.lastElementChild
-    let firstText = innerDiv.firstChild
+    // let firstText = innerDiv.firstChild
     let ul = innerDiv.firstElementChild
-    let secondText = ul.nextSibling
+    // let secondText = ul.nextSibling
     let hr = innerDiv.lastElementChild
 
     let model = {
@@ -335,7 +333,7 @@ describe('adopt', () => {
       <div prop="${model.prop}" test$="${model.test}">
         ${model.text}
         <ul>
-        ${model.list.map(item => `<li> ${item.name} </li>`)}
+        ${model.list.map(item => wire()`<li> ${item.name} </li>`)}
         </ul>
         ${model.inBetween}
         <hr>
