@@ -577,73 +577,49 @@ var hyperHTML = (function (globalDocument) {'use strict';
         return wireHtml();
       case 'svg':
         return wireSvg();
+      case 'adopt':
+        return wireAdopt();
     }
-
-    var adopter, content, container, fragment, render, setup, template;
-
-    function before(document) {
-      fragment = createDocumentFragment(document);
-      container = type === 'svg' ?
-        document.createElementNS(SVG_NAMESPACE, 'svg') :
-        fragment;
-
-      render = bind(container);
-    }
-
-    function after() {
-      if (setup) {
-        setup = false;
-        if (type === 'svg') {
-          appendNodes(fragment, slice.call(container.childNodes));
-        }
-        content = extractContent(fragment);
-      }
-      return content;
-    }
-
-    return type === 'adopt' ?
-      function adopt(strings, ...values) {
-        strings = TL(strings);
-        if (template !== strings) {
-          setup = true;
-          template = strings;
-          adopter = function (parentNode, children, i) {
-            if (setup) {
-              if (i < children.length) {
-                container = children[i];
-                fragment = {
-                  ownerDocument: container.ownerDocument,
-                  childNodes: [container],
-                  children: [container]
-                };
-              } else {
-                if (OWNER_SVG_ELEMENT in parentNode) {
-                  type = 'svg';
-                }
-                // FIXME: mutate alert! `before` sets render to
-                // `bind(container)`, which we undo below. It also sets the
-                // fragment, which we take.
-                before(parentNode.ownerDocument);
-              }
-              render = hyper.adopt(fragment);
-            }
-            render(strings, ...values);
-            return after();
-          };
-        }
-        return adopter;
-      } :
-      function update(strings, ...values) {
-        strings = TL(strings);
-        if (template !== strings) {
-          setup = true;
-          template = strings;
-          before(hyper.document);
-        }
-        render(strings, ...values);
-        return after();
-      };
   }
+
+  const wireAdopt = () => {
+    var content, container, fragment, render, setup, template;
+
+    return function adopt(strings, ...values) {
+        strings = TL(strings);
+        if (template !== strings) {
+          setup = true;
+          template = strings;
+        }
+        return function adopter(parentNode, children, i) {
+          if (setup) {
+            if (children.length > 0) {
+              container = children[i];
+              fragment = {
+                ownerDocument: container.ownerDocument,
+                childNodes: [container],
+                children: [container]
+              };
+              render = hyper.adopt(fragment);
+              render(strings, ...values);
+              content = extractContent(fragment);
+              return content;
+            } else {
+              if (OWNER_SVG_ELEMENT in parentNode) {
+                render = wireSvg();
+              } else {
+                render = wireHtml();
+              }
+              setup = false;
+              content = render(strings, ...values);
+              return content;
+            }
+          }
+
+          return render(strings, ...values);
+        };
+      };
+  };
 
   // return a single node or an Array or nodes
   function extractContent(node) {

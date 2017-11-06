@@ -445,7 +445,7 @@ tressa.async(function (done) {
   wrap.innerHTML = '<ul></ul>';
   result = render`<ul>${
     [{text: 'new'}, {text: 'nodes'}].map(item => hyperHTML.wire(item, 'adopt')`
-      <li> ${item.text} </li>
+      <li>${item.text}</li>
     `)
   }</ul>`;
   list = wrap.querySelectorAll('li');
