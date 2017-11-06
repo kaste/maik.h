@@ -168,6 +168,23 @@ var hyperHTML = (function (globalDocument) {'use strict';
     return node;
   };
 
+  // return a single node or an Array or nodes
+  const extractContent = (node) => {
+    let content = [];
+    let childNodes = node.childNodes;
+
+    for (var i = 0, length = childNodes.length; i < length; i++) {
+      let child = childNodes[i];
+      if (child.nodeType === ELEMENT_NODE ||
+          trim.call(child.textContent).length !== 0) {
+        content.push(child);
+      }
+    }
+    return content.length === 1 ? content[0] : content;
+  };
+
+
+
   // create a template, if unknown
   // upgrade a node to use such template for future updates
   function upgrade(next, strings, contextNode) {
@@ -577,63 +594,7 @@ var hyperHTML = (function (globalDocument) {'use strict';
         return wireHtml();
       case 'svg':
         return wireSvg();
-      case 'adopt':
-        return wireAdopt();
     }
-  }
-
-  const wireAdopt = () => {
-    var content, container, fragment, render, setup, template;
-
-    return function adopt(strings, ...values) {
-        strings = TL(strings);
-        if (template !== strings) {
-          setup = true;
-          template = strings;
-        }
-        return function adopter(parentNode, children, i) {
-          if (setup) {
-            if (children.length > 0) {
-              container = children[i];
-              fragment = {
-                ownerDocument: container.ownerDocument,
-                childNodes: [container],
-                children: [container]
-              };
-              render = hyper.adopt(fragment);
-              render(strings, ...values);
-              content = extractContent(fragment);
-              return content;
-            } else {
-              if (OWNER_SVG_ELEMENT in parentNode) {
-                render = wireSvg();
-              } else {
-                render = wireHtml();
-              }
-              setup = false;
-              content = render(strings, ...values);
-              return content;
-            }
-          }
-
-          return render(strings, ...values);
-        };
-      };
-  };
-
-  // return a single node or an Array or nodes
-  function extractContent(node) {
-    let content = [];
-    let childNodes = node.childNodes;
-
-    for (var i = 0, length = childNodes.length; i < length; i++) {
-      let child = childNodes[i];
-      if (child.nodeType === ELEMENT_NODE ||
-          trim.call(child.textContent).length !== 0) {
-        content.push(child);
-      }
-    }
-    return content.length === 1 ? content[0] : content;
   }
 
   // setup a weak reference if needed and return a wire by ID

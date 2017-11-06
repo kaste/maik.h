@@ -415,26 +415,24 @@ tressa.async(function (done) {
   let items = [{text: 'first'}];
   let li = wrap.querySelector('li');
   let result = render`<ul>${
-    items.map(item => hyperHTML.wire(item, 'adopt')`
-      <li> ${item.text} </li>
+    items.map(item => hyperHTML.wire(item)`
+      <li>${item.text}</li>
     `)
   }</ul>`;
   let list = wrap.querySelectorAll('li');
   tressa.assert(
     list.length === 1 &&
-    list[0] === li &&
     /<ul><li>first<!--.+?--><\/li><!--.+?--><\/ul>/.test(result.innerHTML),
     'one element can be adopted'
   );
   result = render`<ul>${
-    items.map(item => hyperHTML.wire(item, 'adopt')`
-      <li> ${item.text} </li>
+    items.map(item => hyperHTML.wire(item)`
+      <li>${item.text}</li>
     `)
   }</ul>`;
   list = wrap.querySelectorAll('li');
   tressa.assert(
     list.length === 1 &&
-    list[0] === li &&
     /<ul><li>first<!--.+?--><\/li><!--.+?--><\/ul>/.test(result.innerHTML),
     'even after multiple passes'
   );
@@ -444,7 +442,7 @@ tressa.async(function (done) {
   render = hyperHTML.adopt(wrap);
   wrap.innerHTML = '<ul></ul>';
   result = render`<ul>${
-    [{text: 'new'}, {text: 'nodes'}].map(item => hyperHTML.wire(item, 'adopt')`
+    [{text: 'new'}, {text: 'nodes'}].map(item => hyperHTML.wire(item)`
       <li>${item.text}</li>
     `)
   }</ul>`;
@@ -459,11 +457,11 @@ tressa.async(function (done) {
   render = hyperHTML.adopt(wrap);
   wrap.innerHTML = '<p></p><hr>';
   result = render`<p></p>${
-    hyperHTML.wire(items[0], 'adopt')`<span> ${items[0].text} </span>`
+    hyperHTML.wire(items[0])`<span> ${items[0].text} </span>`
   }<hr>`;
   let lastResult = result.innerHTML;
   result = render`<p></p>${
-    items.map(item => hyperHTML.wire(item, 'adopt')`<span> ${item.text} </span>`)
+    items.map(item => hyperHTML.wire(item)`<span> ${item.text} </span>`)
   }<hr>`;
   tressa.assert(
     lastResult === result.innerHTML,
@@ -475,7 +473,7 @@ tressa.async(function (done) {
   wrap.innerHTML = '<svg></svg>';
   if (!('ownerSVGElement' in wrap.firstChild)) wrap.firstChild.ownerSVGElement = null;
   result = hyperHTML.adopt(wrap)`<svg>${
-    [{x: 1, y: 2}].map(item => hyperHTML.wire(item, 'adopt')`
+    [{x: 1, y: 2}].map(item => hyperHTML.wire(item)`
       <rect x$="${item.x}" y$="${item.y}" />
     `)
   }</svg>`;
