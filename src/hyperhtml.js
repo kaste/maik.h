@@ -4,7 +4,7 @@
 import {
   makeRxAwareAttributeUpdateFn, rxAware
 } from './rx-aware-attribute-updater.js';
-import {createTemplateBlueprint} from './make-template-blueprints.js';
+import {upgrade} from './make-template-instance.js';
 import {Aura, optimist} from './aura.js';
 import {
   createFragment,
@@ -65,17 +65,28 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // ATTENTION: Only works for flat templates
   hyper.adopt = function adopt(node) {
     let finalSideEffect = () => node;
-    let upgrader = memoizeOnFirstArg(upgrade.bind(null, adoptBlueprint));
-    return render.bind(null, node, upgrader, finalSideEffect);
+
+    let document = node.ownerDocument;
+    let isSvg = OWNER_SVG_ELEMENT in node;
+    let adopter = adoptBlueprint.bind(null, node);
+    let upgrader = memoizeOnFirstArg(
+      upgrade.bind(null, document, isSvg, adopter));
+
+    return render.bind(null, upgrader, finalSideEffect);
   };
 
   // hyper.bind(el) ⚡️
   // render TL inside a DOM node used as context
   hyper.bind = bind;
-  function bind(context) {
-    let finalSideEffect = lruCacheOne(replaceNodeContent.bind(null, context));
-    let upgrader = memoizeOnFirstArg(upgrade.bind(null, instantiateBlueprint));
-    return render.bind(null, context, upgrader, finalSideEffect);
+  function bind(node) {
+    let finalSideEffect = lruCacheOne(replaceNodeContent.bind(null, node));
+
+    let document = node.ownerDocument;
+    let isSvg = OWNER_SVG_ELEMENT in node;
+    let upgrader = memoizeOnFirstArg(
+      upgrade.bind(null, document, isSvg, instantiateBlueprint));
+
+    return render.bind(null, upgrader, finalSideEffect);
   }
 
   // hyper.define('transformer', callback) 🌀
@@ -119,7 +130,7 @@ var hyperHTML = (function (globalDocument) {'use strict';
   var DOCUMENT_FRAGMENT_NODE = 11;
 
   // SVG related
-  var SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+  const OWNER_SVG_ELEMENT = 'ownerSVGElement';
 
   var EXPANDO = '_hyper_';
   var UID = EXPANDO + ((Math.random() * new Date) | 0) + ';';
@@ -132,11 +143,9 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // ---------------------------------------------
 
   // entry point for all TL => DOM operations
-  function render(
-    contextNode, memoizedUpgrader, finalSideEffect, strings, ...values
-  ) {
+  function render(memoizedUpgrader, finalSideEffect, strings, ...values) {
     strings = TL(strings);
-    let {fragment, updaters} = memoizedUpgrader(strings, contextNode);
+    let {fragment, updaters} = memoizedUpgrader(strings);
     update(updaters, values);
     return finalSideEffect(fragment);
   }
@@ -148,16 +157,13 @@ var hyperHTML = (function (globalDocument) {'use strict';
     }
   }
 
-  const memoizedCreateTemplateBlueprint =
-    memoizeOnFirstArg(createTemplateBlueprint);
-
   const instantiateBlueprint = (blueprint) => {
     let fragment = importNode(blueprint.fragment);
     let updaters = createUpdaters(fragment, blueprint.notes);
     return {fragment, updaters};
   };
 
-  const adoptBlueprint = (blueprint, contextNode) => {
+  const adoptBlueprint = (contextNode, blueprint) => {
     let updaters = discoverUpdates(
       contextNode, blueprint.fragment, blueprint.notes);
     return {updaters};
@@ -185,13 +191,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
   };
 
 
-
-  // create a template, if unknown
-  // upgrade a node to use such template for future updates
-  function upgrade(next, strings, contextNode) {
-    let blueprint = memoizedCreateTemplateBlueprint(strings, contextNode);
-    return next(blueprint, contextNode);
-  }
 
   // given a root node and a list of paths
   // creates an array of updates to invoke
@@ -430,10 +429,12 @@ var hyperHTML = (function (globalDocument) {'use strict';
             anyContent(value.any);
           } else if ('html' in value) {
             var html = [].concat(value.html).join('');
-            aura.splice(0);
-            var fragment = createFragment(node, html);
-            childNodes.push.apply(childNodes, fragment.childNodes);
-            node.parentNode.insertBefore(fragment, node);
+            var fragment = createFragment(node.ownerDocument, false, html);
+
+            anyContent(fragment);
+            // aura.splice(0);
+            // childNodes.push.apply(childNodes, fragment.childNodes);
+            // node.parentNode.insertBefore(fragment, node);
           } else if ('length' in value) {
             anyContent(slice.call(value));
           } else {
@@ -562,26 +563,19 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // Wires
   // ---------------------------------------------
 
-  // FIXME:
-  // Currently `render` still needs a contextNode. This is for two reasons:
-  // First, it uses `contextNode.ownerDocument` instead of a global one.
-  // Second, it uses the type of this node to tell if it should render svg or
-  // html.
-  // The first rules becomes obsolete obviously bc we just use `document` here.
-  const htmlContextNode = document.createElement('div');
-  const svgContextNode = document.createElementNS(SVG_NAMESPACE, 'svg');
-
   const wireHtml = () => {
     let finalSideEffect = lruCacheOne(extractContent);
-    let upgrader = memoizeOnFirstArg(upgrade.bind(null, instantiateBlueprint));
-    return render.bind(null, htmlContextNode, upgrader, finalSideEffect);
+    let upgrader = memoizeOnFirstArg(
+      upgrade.bind(null, document, false, instantiateBlueprint));
+    return render.bind(null, upgrader, finalSideEffect);
   };
   hyper.wireHtml = wireHtml;
 
   const wireSvg = () => {
     let finalSideEffect = lruCacheOne(extractContent);
-    let upgrader = memoizeOnFirstArg(upgrade.bind(null, instantiateBlueprint));
-    return render.bind(null, svgContextNode, upgrader, finalSideEffect);
+    let upgrader = memoizeOnFirstArg(
+      upgrade.bind(null, document, true, instantiateBlueprint));
+    return render.bind(null, upgrader, finalSideEffect);
   };
   hyper.wireSvg = wireSvg;
 

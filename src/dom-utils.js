@@ -3,7 +3,6 @@ import { WK, IE } from './sniffs.js'
 const ELEMENT_NODE = 1
 const TEXT_NODE = 3
 
-const OWNER_SVG_ELEMENT = 'ownerSVGElement'
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg'
 
 const slice = [].slice
@@ -125,24 +124,20 @@ export function insertBefore(parentNode, target, after) {
 
 // given a node, inject some html and return
 // the resulting template document fragment
-export function createFragment(node, html) {
-  return (OWNER_SVG_ELEMENT in node
-    ? createSVGFragment
-    : createHTMLFragment)(node, html)
+export function createFragment(document, svg, html) {
+  return (svg ? createSVGFragment : createHTMLFragment)(document, html)
 }
 
 const SUPPORTS_TEMPLATE = 'content' in document.createElement('template')
 
 // create fragment for HTML
 export const createHTMLFragment = SUPPORTS_TEMPLATE
-  ? function createHTMLFragment(node, html) {
-      let document = node.ownerDocument
+  ? function createHTMLFragment(document, html) {
       let container = document.createElement('template')
       container.innerHTML = html
       return container.content
     }
-  : function createHTMLFragmentLegacy(node, html) {
-      let document = node.ownerDocument
+  : function createHTMLFragmentLegacy(document, html) {
       let fragment = createDocumentFragment(document)
       let container = document.createElement('div')
 
@@ -174,15 +169,14 @@ export const createHTMLFragment = SUPPORTS_TEMPLATE
 
 // create a fragment for SVG
 export const createSVGFragment = SUPPORTS_TEMPLATE
-  ? function createSVGFragment(node, html) {
-      let document = node.ownerDocument
+  ? function createSVGFragment(document, html) {
       let container = document.createElement('template')
       let svgElement = document.createElementNS(SVG_NAMESPACE, 'svg')
       svgElement.innerHTML = html
       appendNodes(container.content, slice.call(svgElement.childNodes))
       return container.content
     }
-  : function createSVGFragmentLegacy(node, html) {
+  : function createSVGFragmentLegacy(document, html) {
       var fragment = createDocumentFragment(document)
       let container = document.createElement('div')
       container.innerHTML =

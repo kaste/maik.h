@@ -17,9 +17,9 @@ const SHOULD_USE_TEXT_CONTENT = /^style|textarea$/i
   which we can use over and over for new instances of this (template)
   fragment.
  */
-export function createTemplateBlueprint(strings, contextNode) {
+export function createTemplateBlueprint(strings, document, isSvg) {
   let html = getHTML(strings)
-  let fragment = createFragment(contextNode, html)
+  let fragment = createFragment(document, isSvg, html)
   return processFragment(strings, fragment)
 }
 
