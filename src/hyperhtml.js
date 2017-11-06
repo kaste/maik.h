@@ -61,8 +61,8 @@ var hyperHTML = (function (globalDocument) {'use strict';
   }
 
   // hyper.adopt(el) 🐣
-  // import an already live DOM structure
-  // described as TL
+  // adopt to an already live DOM structure
+  // ATTENTION: Only works for flat templates
   hyper.adopt = function adopt(node) {
     let finalSideEffect = () => node;
     let upgrader = memoizeOnFirstArg(upgrade.bind(null, adoptBlueprint));
