@@ -7,11 +7,9 @@ import {
 import {createTemplateBlueprint} from './make-template-blueprints.js';
 import {Aura, optimist} from './aura.js';
 import {
-  createDocumentFragment,
   createFragment,
   getChildren,
   importNode,
-  appendNodes,
   createText,
   previousElementSibling,
   nextElementSibling,
