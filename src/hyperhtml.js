@@ -119,7 +119,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
   var DOCUMENT_FRAGMENT_NODE = 11;
 
   // SVG related
-  var OWNER_SVG_ELEMENT = 'ownerSVGElement';
   var SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 
   var EXPANDO = '_hyper_';
