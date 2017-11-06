@@ -1,28 +1,16 @@
 /* eslint semi: [1, 'always'] */
 
-// import {makeAttributeUpdateFn} from './attribute-updater.js';
 import {
-  makeRxAwareAttributeUpdateFn, rxAware
-} from './rx-aware-attribute-updater.js';
-import {upgrade} from './make-template-instance.js';
-import {Aura, optimist} from './aura.js';
-import {
-  createFragment,
-  getChildren,
-  importNode,
-  createText,
-  previousElementSibling,
-  nextElementSibling,
-  removePreviousText,
-  insertBefore
-} from './dom-utils.js';
-import {IE, WK, FF} from './sniffs.js';
-import {
-  memoizeOnFirstArg,
-  lruCacheOne,
-  flatten,
-  indexOf, slice, trim, isArray} from './utils.js';
+  upgrade,
+  instantiateBlueprint,
+  adoptBlueprint
+} from './make-template-instance.js';
+import {FF} from './sniffs.js';
+import { memoizeOnFirstArg, lruCacheOne, trim } from './utils.js';
 import {$WeakMap} from './pseudo-polyfills.js';
+import { UIDC } from './UID.js';
+import {transformers, transformersKeys} from './node-updater.js';
+
 
 
 
@@ -148,15 +136,10 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // without assuming Node is globally available
   // since this project is used on the backend too
   var ELEMENT_NODE = 1;
-  var TEXT_NODE = 3;
-  var DOCUMENT_FRAGMENT_NODE = 11;
 
   // SVG related
   const OWNER_SVG_ELEMENT = 'ownerSVGElement';
 
-  var EXPANDO = '_hyper_';
-  var UID = EXPANDO + ((Math.random() * new Date) | 0) + ';';
-  var UIDC = '<!--' + UID + '-->';
 
 
 
@@ -178,18 +161,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
       updateFns[i](values[i]);
     }
   }
-
-  const instantiateBlueprint = (blueprint) => {
-    let fragment = importNode(blueprint.fragment);
-    let updaters = createUpdaters(fragment, blueprint.notes);
-    return {fragment, updaters};
-  };
-
-  const adoptBlueprint = (contextNode, blueprint) => {
-    let updaters = discoverUpdates(
-      contextNode, blueprint.fragment, blueprint.notes);
-    return {updaters};
-  };
 
   const replaceNodeContent = (node, fragment) => {
     node.textContent = '';
@@ -214,258 +185,8 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
 
 
-  // given a root node and a list of paths
-  // creates an array of updates to invoke
-  // whenever the next interpolation happens
-  function createUpdaters(fragment, parts) {
-    let updates = [];
-    for (var i = 0, length = parts.length; i < length; i++) {
-      let part = parts[i];
-      updates[i] = createUpdateFn(part, getNode(fragment, part.path), []);
-    }
-    return updates;
-  }
-
-  const makeRxAwareContentUpdateFn = rxAware(setAnyContent);
-
-  // Return function which takes a value and then performs the side-effect
-  // of updating the 'hole' in the template; (...) => (val) => IO
-  function createUpdateFn(part, target, childNodes) {
-    switch (part.type) {
-      case 'node':
-        return makeRxAwareContentUpdateFn(target, childNodes, new Aura(target, childNodes));
-      case 'attr':
-        return makeRxAwareAttributeUpdateFn(target, part.name);
-      case 'text':
-        return setTextContent(target);
-    }
-  }
 
 
-  // like createUpdates but for nodes with already a content
-  function discoverUpdates(contextNode, fragment, parts) {
-    let updates = [];
-    for (var i = 0, length = parts.length; i < length; i++) {
-      let childNodes = [];
-      let part = parts[i];
-      updates[i] = createUpdateFn(
-        part,
-        discoverNode(contextNode, fragment, part, childNodes),
-        childNodes
-      );
-    }
-    return updates;
-  }
-
-  // given an info, tries to find out the best option
-  // to replace or update the content
-  function discoverNode(parentNode, virtual, part, childNodes) {
-    for (var
-      target = parentNode,
-      document = parentNode.ownerDocument,
-      path = part.path,
-      virtualNode = getNode(virtual, path),
-      i = 0,
-      length = path.length;
-      i < length;
-      i++
-    ) {
-      switch (path[i++]) {  // <- i++!  path is a flat array of tuples
-        case 'children':
-          target = getChildren(parentNode)[path[i]];
-          if (!target) {
-            // if the node is not there, create it
-            target = parentNode.appendChild(
-              parentNode.ownerDocument.createElement(
-                getNode(virtual, path.slice(0, i + 1)).nodeName
-              )
-            );
-
-          }
-
-          if (i === length - 1 && part.type === 'attr') {
-            target.removeAttribute(part.name);
-          }
-          parentNode = target;
-          break;
-        case 'childNodes':
-          var children = getChildren(parentNode);
-          var virtualChildren = getChildren(virtualNode.parentNode);
-          target = previousElementSibling(virtualNode);
-          var before = target ? (indexOf.call(virtualChildren, target) + 1) : -1;
-          target = nextElementSibling(virtualNode);
-          var after = target ? indexOf.call(virtualChildren, target) : -1;
-          switch (true) {
-            // `${'virtual'}` is actually resolved as `${'any'}`
-            // case before < 0 && after < 0:
-            //   after = 0;
-
-            case after < 0:
-            // `</a>${'virtual'}`
-              after = children.length;
-              break;
-            case before < 0:
-            // `${'virtual'}<b>`
-              before = 0;
-              /* fallthrough */
-            default:
-            // `</a>${'virtual'}<b>`
-              after = -(virtualChildren.length - after);
-              break;
-          }
-          childNodes.push.apply(
-            childNodes,
-            slice.call(children, before, after)
-          );
-
-          target = document.createComment(UID);
-          if (childNodes.length) {
-            insertBefore(
-              parentNode,
-              target,
-              nextElementSibling(childNodes[childNodes.length - 1])
-            );
-          } else {
-            insertBefore(
-              parentNode,
-              target,
-              slice.call(children, after)[0]
-            );
-          }
-          if (childNodes.length === 0) {
-            removePreviousText(parentNode, target);
-          }
-          break;
-      }
-    }
-    return target;
-  }
-
-
-
-  // --------------------------------------------
-  // side-effects
-  // --------------------------------------------
-
-  // `<style>${'text'}</style>`
-  function setTextContent(node) {
-    var oldValue;
-    return function (value) {
-      if (value !== oldValue) {
-        oldValue = value;
-        node.textContent = value;
-      }
-    };
-  }
-
-  // `<p>${'any'}</p>`
-  // `<li>a</li>${'virtual'}<li>c</li>`
-  function setAnyContent(node, childNodes, aura) {
-    var oldValue;
-    return function anyContent(value) {
-      var length;
-      switch (typeof value) {
-        case 'string':
-        case 'number':
-        case 'boolean':
-          length = childNodes.length;
-          if (
-            length === 1 &&
-            childNodes[0].nodeType === TEXT_NODE
-          ) {
-            if (oldValue !== value) {
-              oldValue = value;
-              childNodes[0].textContent = value;
-            }
-          } else {
-            oldValue = value;
-            if (length) {
-              aura.splice(0, length, createText(node, value));
-            } else {
-              childNodes[0] = node.parentNode.insertBefore(
-                createText(node, value),
-                node
-              );
-            }
-          }
-          break;
-        case 'function':
-          anyContent(value(node.parentNode, childNodes, 0));
-          break;
-        case 'object':
-        case 'undefined':
-          if (value == null) {
-            oldValue = value;
-            anyContent('');
-            break;
-          }
-          /* fallthrough */
-        default:
-          oldValue = value;
-          if (isArray(value)) {
-            length = value.length;
-            if (length === 0) {
-              aura.splice(0);
-            } else {
-              switch (typeof value[0]) {
-                case 'string':
-                case 'number':
-                case 'boolean':
-                  anyContent({html: value});
-                  break;
-                case 'function':
-                  var parentNode = node.parentNode;
-                  for (var i = 0; i < length; i++) {
-                    value[i] = value[i](parentNode, childNodes, i);
-                  }
-                  anyContent(flatten(value));
-                  break;
-                case 'object':
-                  if (isArray(value[0])) {
-                    value = flatten(value);
-                  }
-                  if (isPromise_ish(value[0])) {
-                    Promise.all(value).then(anyContent);
-                    break;
-                  }
-                  /* fallthrough */
-                default:
-                  optimist(aura, value);
-                  break;
-              }
-            }
-          } else if (isNode_ish(value)) {
-            optimist(
-              aura,
-              value.nodeType === DOCUMENT_FRAGMENT_NODE ?
-                slice.call(value.childNodes) :
-                [value]
-            );
-          } else if (isPromise_ish(value)) {
-            value.then(anyContent);
-          } else if ('placeholder' in value) {
-            invokeAtDistance(value, anyContent);
-          } else if ('text' in value) {
-            anyContent(String(value.text));
-          } else if ('any' in value) {
-            anyContent(value.any);
-          } else if ('html' in value) {
-            var html = [].concat(value.html).join('');
-            var fragment = createFragment(node.ownerDocument, false, html);
-
-            anyContent(fragment);
-            // aura.splice(0);
-            // childNodes.push.apply(childNodes, fragment.childNodes);
-            // node.parentNode.insertBefore(fragment, node);
-          } else if ('length' in value) {
-            anyContent(slice.call(value));
-          } else {
-            anyContent(invokeTransformer(value, anyContent));
-          }
-          break;
-      }
-    };
-  }
 
 
   // ---------------------------------------------
@@ -497,53 +218,11 @@ var hyperHTML = (function (globalDocument) {'use strict';
     return oEscape[m];
   }
 
-  // return content as html
-  function asHTML(html) {
-    return {html: html};
-  }
-
-
-  // use a placeholder and resolve with the right callback
-  function invokeAtDistance(value, callback) {
-    callback(value.placeholder);
-    if ('text' in value) {
-      Promise.resolve(value.text).then(String).then(callback);
-    } else if ('any' in value) {
-      Promise.resolve(value.any).then(callback);
-    } else if ('html' in value) {
-      Promise.resolve(value.html).then(asHTML).then(callback);
-    } else {
-      Promise.resolve(invokeTransformer(value, callback)).then(callback);
-    }
-  }
-
-  // last attempt to transform content
-  function invokeTransformer(object, callback) {
-    for (var key, i = 0, length = transformersKeys.length; i < length; i++) {
-      key = transformersKeys[i];
-      if (object.hasOwnProperty(key)) {
-        return transformers[key](object[key], callback);
-      }
-    }
-  }
-
-  // quick and dirty Node check
-  function isNode_ish(value) {
-    return 'ELEMENT_NODE' in value;
-  }
-
-  // quick and dirty Promise check
-  function isPromise_ish(value) {
-    return value != null && 'then' in value;
-  }
 
   // ---------------------------------------------
   // Shared variables
   // ---------------------------------------------
 
-  // transformers registry
-  var transformers = {};
-  var transformersKeys = [];
 
   // normalize Firefox issue with template literals
   var templateObjects = {};
@@ -554,30 +233,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
           (templateObjects[key] = template);
   }
 
-
-  // return the correct node walking through a path
-  // fixes IE/Edge issues with attributes and children (fixes old WebKit too)
-  var getNode = IE || WK ?
-      function getNode(parentNode, path) {
-        for (var name, i = 0, length = path.length; i < length; i++) {
-          name = path[i++];
-          switch (name) {
-            case 'children':
-              parentNode = getChildren(parentNode)[path[i]];
-              break;
-            default:
-              parentNode = parentNode[name][path[i]];
-              break;
-          }
-        }
-        return parentNode;
-      } :
-      function getNode(parentNode, path) {
-        for (var i = 0, length = path.length; i < length; i++) {
-          parentNode = parentNode[path[i++]][path[i]];
-        }
-        return parentNode;
-      };
 
 
 
