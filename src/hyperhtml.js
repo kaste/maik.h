@@ -60,6 +60,39 @@ var hyperHTML = (function (globalDocument) {'use strict';
       ).apply(null, arguments);
   }
 
+
+  // The main render factories
+
+  // hyper.bind(el) ⚡️
+  // render TL inside a DOM node used as context
+  hyper.bind = bind;
+  function bind(node) {
+    let finalSideEffect = lruCacheOne(replaceNodeContent.bind(null, node));
+
+    let document = node.ownerDocument;
+    let isSvg = OWNER_SVG_ELEMENT in node;
+    let upgrader = memoizeOnFirstArg(
+      upgrade.bind(null, document, isSvg, instantiateBlueprint));
+
+    return render.bind(null, upgrader, finalSideEffect);
+  }
+
+  const wireHtml = () => {
+    let finalSideEffect = lruCacheOne(extractContent);
+    let upgrader = memoizeOnFirstArg(
+      upgrade.bind(null, document, false, instantiateBlueprint));
+    return render.bind(null, upgrader, finalSideEffect);
+  };
+  hyper.wireHtml = wireHtml;
+
+  const wireSvg = () => {
+    let finalSideEffect = lruCacheOne(extractContent);
+    let upgrader = memoizeOnFirstArg(
+      upgrade.bind(null, document, true, instantiateBlueprint));
+    return render.bind(null, upgrader, finalSideEffect);
+  };
+  hyper.wireSvg = wireSvg;
+
   // hyper.adopt(el) 🐣
   // adopt to an already live DOM structure
   // ATTENTION: Only works for flat templates
@@ -75,19 +108,8 @@ var hyperHTML = (function (globalDocument) {'use strict';
     return render.bind(null, upgrader, finalSideEffect);
   };
 
-  // hyper.bind(el) ⚡️
-  // render TL inside a DOM node used as context
-  hyper.bind = bind;
-  function bind(node) {
-    let finalSideEffect = lruCacheOne(replaceNodeContent.bind(null, node));
+  // - - - - - - - - - - - - - - - - - - - - - - -
 
-    let document = node.ownerDocument;
-    let isSvg = OWNER_SVG_ELEMENT in node;
-    let upgrader = memoizeOnFirstArg(
-      upgrade.bind(null, document, isSvg, instantiateBlueprint));
-
-    return render.bind(null, upgrader, finalSideEffect);
-  }
 
   // hyper.define('transformer', callback) 🌀
   hyper.define = function define(transformer, callback) {
@@ -143,9 +165,9 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // ---------------------------------------------
 
   // entry point for all TL => DOM operations
-  function render(memoizedUpgrader, finalSideEffect, strings, ...values) {
+  function render(createTemplateInstance, finalSideEffect, strings, ...values) {
     strings = TL(strings);
-    let {fragment, updaters} = memoizedUpgrader(strings);
+    let {fragment, updaters} = createTemplateInstance(strings);
     update(updaters, values);
     return finalSideEffect(fragment);
   }
@@ -562,22 +584,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // ---------------------------------------------
   // Wires
   // ---------------------------------------------
-
-  const wireHtml = () => {
-    let finalSideEffect = lruCacheOne(extractContent);
-    let upgrader = memoizeOnFirstArg(
-      upgrade.bind(null, document, false, instantiateBlueprint));
-    return render.bind(null, upgrader, finalSideEffect);
-  };
-  hyper.wireHtml = wireHtml;
-
-  const wireSvg = () => {
-    let finalSideEffect = lruCacheOne(extractContent);
-    let upgrader = memoizeOnFirstArg(
-      upgrade.bind(null, document, true, instantiateBlueprint));
-    return render.bind(null, upgrader, finalSideEffect);
-  };
-  hyper.wireSvg = wireSvg;
 
   // [element] = {template, updates};
   var wires = new $WeakMap;
