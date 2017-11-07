@@ -11,7 +11,7 @@ export function render(
   strings,
   ...values
 ) {
-  strings = TL(strings)
+  strings = unique(strings)
   let { fragment, updaters } = createTemplateInstance(strings)
   update(updaters, values)
   return finalSideEffect(fragment)
@@ -50,19 +50,15 @@ export const extractContent = node => {
 // both Firefox < 55 and TypeScript have issues with template literals
 // this lazy defined callback should spot issues right away
 // and in the best case scenario become a no-op
-var TL = function(template) {
-  if (template.propertyIsEnumerable('raw') || FF) TL = unique
-  else
-    TL = function(t) {
-      return t
+let unique = strings => {
+  if (strings.propertyIsEnumerable('raw') || FF) {
+    const templateObjects = {}
+    unique = strings => {
+      var key = '_' + strings.join(UIDC)
+      return templateObjects[key] || (templateObjects[key] = strings)
     }
-  return TL(template)
-}
-
-// normalize Firefox issue with template literals
-var templateObjects = {}
-
-function unique(template) {
-  var key = '_' + template.join(UIDC)
-  return templateObjects[key] || (templateObjects[key] = template)
+  } else {
+    unique = strings => strings
+  }
+  return unique(strings)
 }
