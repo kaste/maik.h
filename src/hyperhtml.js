@@ -85,11 +85,17 @@ var hyperHTML = (function (globalDocument) {'use strict';
   hyper.svg = svg;
 
 
-  const materializer = () => {
-    let wire = lruCacheOne(wireContent);
+  const materializer = (finalizer=extractContent) => {
+    let finalSideEffect = lruCacheOne(finalizer);
+    let wire = lruCacheOne(
+      (isSvg) => memoizeOnFirstArg(
+        upgrade.bind(null, document, isSvg, instantiateBlueprint)
+      )
+    );
     return (tagInvocation) => {
       let {strings, values, isSvg} = tagInvocation;
-      return wire(isSvg ? 'svg' : 'html')(strings, ...values);
+      let upgrader = wire(isSvg);
+      return render(upgrader, finalSideEffect, strings, ...values);
     };
   };
   hyper.materializer = materializer;

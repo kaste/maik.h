@@ -114,8 +114,8 @@ export const setAnyContent = (node, childNodes, aura) => {
         } else if (value instanceof TagInvocation) {
           let tagInvocation = value
           let key = tagInvocation.key || tagInvocation.type
-          let wire = wires[key] || (wires[key] = materializer())
-          anyContent(wire(tagInvocation))
+          let wire = wires[key] || (wires[key] = materializer(anyContent))
+          wire(tagInvocation)
         } else if (isPromise_ish(value)) {
           value.then(anyContent)
         } else if ('placeholder' in value) {
