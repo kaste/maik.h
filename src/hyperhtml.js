@@ -23,31 +23,12 @@ var hyperHTML = (function (globalDocument) {'use strict';
   // hyperHTML Public API
   // ---------------------------------------------
 
+
+  const hyper = {};
+
   // The document must be swap-able at runtime.
   // Needed by both basicHTML and nativeHTML
   hyper.document = globalDocument;
-
-  // friendly destructuring
-  hyper.hyper = hyper;
-
-  function hyper(HTML) {
-    return arguments.length < 2 ?
-      (HTML == null ?
-        wireContent('html') :
-        (typeof HTML === 'string' ?
-          wire(null, HTML) :
-          ('raw' in HTML ?
-            wireContent('html')(HTML) :
-            ('nodeType' in HTML ?
-              bind(HTML) :
-              wireWeakly(HTML, 'html')
-            )
-          )
-        )) :
-      ('raw' in HTML ?
-        wireContent('html') : wire
-      ).apply(null, arguments);
-  }
 
 
   // The main render factories
