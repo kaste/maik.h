@@ -1,6 +1,8 @@
 import { createFragment, createText } from './dom-utils.js'
 import { optimist } from './aura.js'
 import { isArray, slice, flatten } from './utils.js'
+import { TagInvocation } from './tag-invocation-type.js'
+import { materializer } from './hyperhtml.js'
 
 const TEXT_NODE = 3
 const DOCUMENT_FRAGMENT_NODE = 11
@@ -24,6 +26,7 @@ export const setTextContent = node => {
 // `<li>a</li>${'virtual'}<li>c</li>`
 export const setAnyContent = (node, childNodes, aura) => {
   var oldValue
+  let wires = Object.create(null)
   return function anyContent(value) {
     var length
     switch (typeof value) {
@@ -87,6 +90,14 @@ export const setAnyContent = (node, childNodes, aura) => {
                   Promise.all(value).then(anyContent)
                   break
                 }
+                if (value[0] instanceof TagInvocation) {
+                  for (let i = 0; i < length; i++) {
+                    let tagInvocation = value[i]
+                    let key = tagInvocation.key || i
+                    let wire = wires[key] || (wires[key] = materializer())
+                    value[i] = wire(tagInvocation)
+                  }
+                }
               /* fallthrough */
               default:
                 optimist(aura, value)
@@ -100,6 +111,11 @@ export const setAnyContent = (node, childNodes, aura) => {
               ? slice.call(value.childNodes)
               : [value]
           )
+        } else if (value instanceof TagInvocation) {
+          let tagInvocation = value
+          let key = tagInvocation.key || tagInvocation.type
+          let wire = wires[key] || (wires[key] = materializer())
+          anyContent(wire(tagInvocation))
         } else if (isPromise_ish(value)) {
           value.then(anyContent)
         } else if ('placeholder' in value) {

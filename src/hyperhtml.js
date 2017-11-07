@@ -6,10 +6,11 @@ import {
   adoptBlueprint
 } from './make-template-instance.js';
 import {FF} from './sniffs.js';
-import { memoizeOnFirstArg, lruCacheOne, trim } from './utils.js';
+import { memoizeOnFirstArg, lruCacheOne, trim, isArray } from './utils.js';
 import {$WeakMap} from './pseudo-polyfills.js';
 import { UIDC } from './UID.js';
 import {transformers, transformersKeys} from './node-updater.js';
+import {TagInvocation} from './tag-invocation-type.js';
 
 
 
@@ -64,6 +65,46 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
     return render.bind(null, upgrader, finalSideEffect);
   }
+
+  const html = (strings, ...values) => {
+    if (isArray(strings)) {
+      return new TagInvocation(strings, values, false);
+    }
+    let key = strings;
+    return (strings, ...values) => new TagInvocation(strings, values, false, key);
+  };
+  hyper.html = html;
+
+  const svg = (strings, ...values) => {
+    if (isArray(strings)) {
+      return new TagInvocation(strings, values, true);
+    }
+    let key = strings;
+    return (strings, ...values) => new TagInvocation(strings, values, true, key);
+  };
+  hyper.svg = svg;
+
+
+  const materializer = () => {
+    let wire = lruCacheOne(wireContent);
+    return (tagInvocation) => {
+      let {strings, values, isSvg} = tagInvocation;
+      return wire(isSvg ? 'svg' : 'html')(strings, ...values);
+    };
+  };
+  hyper.materializer = materializer;
+
+  const materialize = (tagInvocation) => {
+    return materializer()(tagInvocation);
+  };
+  hyper.materialize = materialize;
+
+  const keyed = (key, tagInvocation) => {
+    tagInvocation.key = key;
+    return tagInvocation;
+  };
+  hyper.keyed = keyed;
+
 
   const wireHtml = () => {
     let finalSideEffect = lruCacheOne(extractContent);
@@ -278,5 +319,5 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
 export default hyperHTML;
 
-const {bind, escape, wire, wireHtml, wireSvg, adopt} = hyperHTML;
-export {bind, escape, wire, wireHtml, wireSvg, adopt};
+const {bind, html, materialize, materializer, keyed, escape, wire, wireHtml, wireSvg, adopt} = hyperHTML;
+export {bind, html, materialize, materializer, keyed, escape, wire, wireHtml, wireSvg, adopt};
