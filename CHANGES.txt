@@ -1,0 +1,35 @@
+
+
+- Removed MutationObserver on document. With it removed connected/disconnected errors
+
+- Allow `on-click` etc. instead of `onclick`
+
+- All event-names are lowercased (TBC)
+
+- By default, the attributes are actually set as properties (``node[name] = value``). Add a '$' to opt-in to attribute setting (``node.setAttribute(name, value)``). (polymer-style).
+
+    <p class$=${'big'}></p> vs. <p className=${'big'}></p>
+
+    But <input value=${''} /> just works.
+
+- Removed hyperHTML.Component bc it belongs to a separate project.
+
+- Add Observable support (RxJS) as a primitive type for nodes and attribute parts.
+
+- Use importNode instead of cloneNode for better interop with custom elements
+
+- Remove a-frame hack
+
+- Make strings preprocessing faster
+
+- Early remove attributes (before cloning) for interop with custom elements
+
+- Remove `wire(obj, ':adopt')` bc it was really dirty
+
+- Do NOT treat arrays of primitive values (like strings) as html, just `join('')` them
+
+- Add html`` and svg`` functions which will be lazy evaluated during render.
+
+- Remove this-es and in general refactor the caching system
+
+- Removed `hyperHTML.escape`
