@@ -8,14 +8,14 @@ import {
   instantiateBlueprint,
   adoptBlueprint
 } from './make-template-instance.js';
-import {FF} from './sniffs.js';
-import { memoizeOnFirstArg, lruCacheOne, trim, isArray } from './utils.js';
+import { render, replaceNodeContent, extractContent } from './render.js';
+import { memoizeOnFirstArg, lruCacheOne, isArray } from './utils.js';
 import {$WeakMap} from './pseudo-polyfills.js';
-import { UIDC } from './UID.js';
 import {transformers, transformersKeys} from './node-updater.js';
 import {TagInvocation} from './tag-invocation-type.js';
 
 
+const OWNER_SVG_ELEMENT = 'ownerSVGElement';
 
 
 
@@ -58,6 +58,10 @@ export const svg = (strings, ...values) => {
   return (strings, ...values) => new TagInvocation(strings, values, true, key);
 };
 
+export const materialize = (tagInvocation) => {
+  return materializer()(tagInvocation);
+};
+
 
 export const materializer = (finalizer=extractContent) => {
   let finalSideEffect = lruCacheOne(finalizer);
@@ -73,15 +77,21 @@ export const materializer = (finalizer=extractContent) => {
   };
 };
 
-export const materialize = (tagInvocation) => {
-  return materializer()(tagInvocation);
-};
-
 export const keyed = (key, tagInvocation) => {
   tagInvocation.key = key;
   return tagInvocation;
 };
 
+// hyper.wire(obj, 'type:ID') ➰
+// relate a renderer to a generic object
+export function wire(obj, type) {
+  return arguments.length < 1 ?
+    wireContent('html') :
+    (obj == null ?
+      wireContent(type || 'html') :
+      wireWeakly(obj, type || 'html')
+    );
+}
 
 export const wireHtml = () => {
   let finalSideEffect = lruCacheOne(extractContent);
@@ -123,99 +133,6 @@ export const define = (transformer, callback) => {
   transformers[transformer] = callback;
   // TODO: else throw ? console.warn ? who cares ?
 };
-
-// hyper.wire(obj, 'type:ID') ➰
-// relate a renderer to a generic object
-export function wire(obj, type) {
-  return arguments.length < 1 ?
-    wireContent('html') :
-    (obj == null ?
-      wireContent(type || 'html') :
-      wireWeakly(obj, type || 'html')
-    );
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - -
-
-// ---------------------------------------------
-// Constants
-// ---------------------------------------------
-
-// Node.CONSTANTS
-// without assuming Node is globally available
-// since this project is used on the backend too
-var ELEMENT_NODE = 1;
-
-// SVG related
-const OWNER_SVG_ELEMENT = 'ownerSVGElement';
-
-
-
-
-// ---------------------------------------------
-// hyperHTML Operations
-// ---------------------------------------------
-
-// entry point for all TL => DOM operations
-function render(createTemplateInstance, finalSideEffect, strings, ...values) {
-  strings = TL(strings);
-  let {fragment, updaters} = createTemplateInstance(strings);
-  update(updaters, values);
-  return finalSideEffect(fragment);
-}
-
-// invokes each update function passing interpolated value
-function update(updateFns, values) {
-  for (var i = 0, length = updateFns.length; i < length; i++) {
-    updateFns[i](values[i]);
-  }
-}
-
-const replaceNodeContent = (node, fragment) => {
-  node.textContent = '';
-  node.appendChild(fragment);
-  return node;
-};
-
-// return a single node or an Array or nodes
-const extractContent = (node) => {
-  let content = [];
-  let childNodes = node.childNodes;
-
-  for (var i = 0, length = childNodes.length; i < length; i++) {
-    let child = childNodes[i];
-    if (child.nodeType === ELEMENT_NODE ||
-        trim.call(child.textContent).length !== 0) {
-      content.push(child);
-    }
-  }
-  return content.length === 1 ? content[0] : content;
-};
-
-
-
-
-
-
-
-// both Firefox < 55 and TypeScript have issues with template literals
-// this lazy defined callback should spot issues right away
-// and in the best case scenario become a no-op
-var TL = function (template) {
-  if (template.propertyIsEnumerable('raw') || FF) TL = unique;
-  else TL = function (t) { return t; };
-  return TL(template);
-};
-
-// normalize Firefox issue with template literals
-var templateObjects = {};
-
-function unique(template) {
-  var key = '_' + template.join(UIDC);
-  return templateObjects[key] ||
-        (templateObjects[key] = template);
-}
 
 
 // ---------------------------------------------
