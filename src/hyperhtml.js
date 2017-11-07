@@ -155,11 +155,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
     // TODO: else throw ? console.warn ? who cares ?
   };
 
-  // hyper.escape('<html>') => '&lt;text&gt;' 🏃
-  hyper.escape = function escape(html) {
-    return html.replace(/[&<>'"]/g, fnEscape);
-  };
-
   // hyper.wire(obj, 'type:ID') ➰
   // relate a renderer to a generic object
   hyper.wire = wire;
@@ -236,10 +231,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
 
 
-  // ---------------------------------------------
-  // Features detection / ugly UA sniffs
-  // ---------------------------------------------
-
   // both Firefox < 55 and TypeScript have issues with template literals
   // this lazy defined callback should spot issues right away
   // and in the best case scenario become a no-op
@@ -249,28 +240,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
     return TL(template);
   };
 
-  // ---------------------------------------------
-  // Helpers
-  // ---------------------------------------------
-
-  // used to sanitize html
-  var oEscape = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    "'": '&#39;',
-    '"': '&quot;'
-  };
-  function fnEscape(m) {
-    return oEscape[m];
-  }
-
-
-  // ---------------------------------------------
-  // Shared variables
-  // ---------------------------------------------
-
-
   // normalize Firefox issue with template literals
   var templateObjects = {};
 
@@ -279,8 +248,6 @@ var hyperHTML = (function (globalDocument) {'use strict';
     return templateObjects[key] ||
           (templateObjects[key] = template);
   }
-
-
 
 
   // ---------------------------------------------
@@ -325,5 +292,5 @@ var hyperHTML = (function (globalDocument) {'use strict';
 
 export default hyperHTML;
 
-const {bind, html, materialize, materializer, keyed, escape, wire, wireHtml, wireSvg, adopt} = hyperHTML;
-export {bind, html, materialize, materializer, keyed, escape, wire, wireHtml, wireSvg, adopt};
+const {bind, html, materialize, materializer, keyed, wire, wireHtml, wireSvg, adopt} = hyperHTML;
+export {bind, html, materialize, materializer, keyed, wire, wireHtml, wireSvg, adopt};

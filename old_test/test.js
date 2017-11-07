@@ -147,10 +147,6 @@ tressa.async(function (done) {
   });
 })
 .then(function () {
-  tressa.log('## hyperHTML.escape(html)');
-  tressa.assert(hyperHTML.escape('<html>') === '&lt;html&gt;', 'escape as expected');
-})
-.then(function () {
   return tressa.async(function (done) {
     tressa.log('## hyperHTML.wire()');
 
