@@ -1,9 +1,9 @@
 {
-  "name": "hyperhtml",
-  "version": "1.12.1",
-  "description": "A Fast & Light Virtual DOM Alternative",
+  "name": "maik.h",
+  "version": "0.1.0",
+  "description": "Fast and light HTML templating without the render loop",
   "browser": "min.js",
-  "homepage": "https://viperhtml.js.org/hyper.html",
+  "homepage": "https://github.com/kaste/maik.h",
   "main": "index.js",
   "scripts": {
     "build": "rollup -c",
@@ -22,11 +22,8 @@
     "url": "git+https://github.com/WebReflection/hyperhtml.git"
   },
   "keywords": ["dom", "template", "fast", "performance", "diff"],
-  "author": "Andrea Giammarchi",
+  "author": "kaste",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/WebReflection/hyperhtml/issues"
-  },
   "devDependencies": {
     "@reactivex/rxjs": "^5.5.1",
     "babel-cli": "^6.26.0",
