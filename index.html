@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+  <title></title>
+  <script src="https://unpkg.com/rxjs/bundles/Rx.js"></script>
+  <script src="index.js"></script>
+
+  <style>
+    body {
+      margin: auto;
+      max-width: 900px;
+      background: #e2e2e2;
+    }
+    div {
+      display: flex;
+      justify-content: space-around;
+      background: #eee;
+      padding: 1em;
+      margin: 4px 0;
+    }
+
+    span {
+      margin: 2px;
+      background: #91d67b;
+      padding: 8px 12px;
+      height: 34px; width: 34px; box-sizing: border-box;
+    }
+    pre {
+      overflow: auto;
+    }
+  </style>
+
+</head>
+<body>
+  <div id="first">
+    first
+  </div>
+  <div id="second">
+    second
+  </div>
+  <pre id="source_code"></pre>
+  <script id="script">
+    const TICK = 300
+
+    let tick = Rx.Observable.interval(TICK).mapTo(1)
+    // let tick = Rx.Observable.interval(0, Rx.Scheduler.animationFrame).mapTo(1)
+
+    let startStop = Rx.Observable
+      .fromEvent(document, 'click')
+      .startWith(true)
+      .scan(a => !a)
+
+
+    window.clock = startStop.switchMap(run => (run ? tick : Rx.Observable.never()))
+
+    window.makeCounter = clock =>
+      clock
+        .filter(x => x === 1)
+        .scan(a => a + 1, -1)
+        .map(n => n % 3)
+        .map(n => n + 1)
+
+    let { bind, html } = hyperHTML
+
+    let first = document.querySelector('#first')
+    let second = document.querySelector('#second')
+
+    let simpleCounter = makeCounter(clock)
+
+    // `bind` gives you a render function back. The renderer takes complete
+    // control over the provided DOM-node (here: `first`)
+    let render = bind(first)
+    // Note that we don't do a render-loop here! We call render exactly ONCE.
+    render`<span>${simpleCounter}</span>`
+
+    let counters = []
+    let cClock = clock
+    for (let i = 0, l = 10; i < l; i++) {
+      cClock = counters[i] = makeCounter(cClock)
+    }
+
+    let renderSecond = bind(second)
+    // Unlike `bind`, `html` itself has no sideeffect. It is just a _lazy_
+    // container, ready to be rendered at some time.
+    // Now, open your browser DevTools and see that each text node is updated
+    // only when needed. Cool, heh. Still no render loop here, the values are
+    // pushed into the DOM.
+    renderSecond`${
+      counters.map(counter => html`<span>${counter}</span>`)
+    }`
+
+  </script>
+  <script>
+    let script = document.querySelector('#script')
+    let source_code = document.querySelector('#source_code')
+    source_code.innerText = script.text
+  </script>
+</body>
+</html>
