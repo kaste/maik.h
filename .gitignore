@@ -1,5 +1,7 @@
 .DS_Store
 node_modules/
+/default-maik.js
+/default-maik.min.js
 /index.js
 /index.mjs
 /min.js

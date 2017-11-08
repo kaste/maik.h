@@ -1,6 +1,7 @@
 /* eslint semi: [1, 'always'] */
 /* global tressa, hyperHTML */
 var SKIP_ADOPT = typeof location !== typeof SKIP_ADOPT && -1 < location.search.indexOf('noadopt');
+var hyperHTML = maik
 
 tressa.title('HyperHTML');
 

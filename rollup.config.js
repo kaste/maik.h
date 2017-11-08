@@ -1,11 +1,11 @@
 import rootImport from 'rollup-plugin-root-import'
 
 export default {
-  input: 'hyperHTML.js',
+  input: 'default-maik-bundler.js',
   output: {
-    file: 'index.js',
+    file: 'default-maik.js',
     format: 'iife',
-    name: 'hyperHTML'
+    name: 'maik'
   },
   plugins: [rootImport()]
 }

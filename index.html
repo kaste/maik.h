@@ -5,7 +5,7 @@
 
   <title></title>
   <script src="https://unpkg.com/rxjs/bundles/Rx.js"></script>
-  <script src="index.js"></script>
+  <script src="default-maik.js"></script>
 
   <style>
     body {
@@ -62,7 +62,7 @@
         .map(n => n % 3)
         .map(n => n + 1)
 
-    let { bind, html } = hyperHTML
+    let { bind, html } = maik
 
     let first = document.querySelector('#first')
     let second = document.querySelector('#second')

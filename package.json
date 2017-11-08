@@ -2,9 +2,9 @@
   "name": "maik.h",
   "version": "0.1.0",
   "description": "Fast and light HTML templating without the render loop",
-  "browser": "min.js",
+  "browser": "default-maik.min.js",
   "homepage": "https://github.com/kaste/maik.h",
-  "main": "index.js",
+  "main": "default-maik.js",
   "scripts": {
     "build": "rollup -c",
     "postbuild": "npm run minify",
@@ -14,8 +14,8 @@
     "dev": "rollup -c -w",
     "ie": "babel ./test/test.js --out-dir ./test/ie --presets=es2015",
     "minify":
-      "uglifyjs index.js --comments=\"/^!/\" --compress --mangle -o min.js",
-    "size": "cat index.js | wc -c;cat min.js | wc -c;gzip -c min.js | wc -c"
+      "uglifyjs default-maik.js --comments=\"/^!/\" --compress --mangle -o default-maik.min.js",
+    "size": "cat default-maik.js | wc -c;cat default-maik.min.js | wc -c;gzip -c default-maik.min.js | wc -c"
   },
   "repository": {
     "type": "git",
