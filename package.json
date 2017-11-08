@@ -15,9 +15,7 @@
     "ie": "babel ./test/test.js --out-dir ./test/ie --presets=es2015",
     "minify":
       "uglifyjs index.js --comments=\"/^!/\" --compress --mangle -o min.js",
-    "size":
-      "cat index.js | wc -c;cat min.js | wc -c;gzip -c min.js | wc -c",
-    "prepare": "patch-package"
+    "size": "cat index.js | wc -c;cat min.js | wc -c;gzip -c min.js | wc -c"
   },
   "repository": {
     "type": "git",
@@ -41,9 +39,8 @@
     "karma-chai": "^0.1.0",
     "karma-chrome-launcher": "^2.2.0",
     "karma-mocha": "^1.3.0",
-    "majinbuu": "^1.1.0",
+    "majinbuu": "kaste/majinbuu",
     "mocha": "^4.0.1",
-    "patch-package": "^3.5.1",
     "prettier": "^1.7.4",
     "rollup": "0.51",
     "rollup-plugin-root-import": "^0.2.2",
