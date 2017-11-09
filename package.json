@@ -19,7 +19,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/WebReflection/hyperhtml.git"
+    "url": "git+https://github.com/kaste/maik.h"
   },
   "keywords": ["dom", "template", "fast", "performance", "diff"],
   "author": "kaste",
