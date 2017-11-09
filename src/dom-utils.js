@@ -63,7 +63,7 @@ export const importNode = (function() {
   return featureFragment.cloneNode(true).childNodes.length === 1
     ? function importNode(node) {
         for (
-          var clone = document.importNode(),
+          var clone = document.importNode(node),
             childNodes = node.childNodes || [],
             i = 0,
             length = childNodes.length;
