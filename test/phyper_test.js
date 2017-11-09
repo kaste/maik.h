@@ -1,6 +1,6 @@
 /* global chai */
 
-import { bind, wire, adopt } from '../src/hyperhtml.js'
+import { bind, wire, adopt } from '../src/maik.js'
 import { matchInnerHTML } from './utils.js'
 
 const { assert } = chai

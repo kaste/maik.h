@@ -1,1 +1,1 @@
-export * from './src/hyperhtml.js'
+export * from './src/maik.js'

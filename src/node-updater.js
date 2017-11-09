@@ -2,7 +2,7 @@ import { createFragment, createText } from './dom-utils.js'
 import { optimist } from './aura.js'
 import { isArray, slice, flatten } from './utils.js'
 import { TagInvocation } from './tag-invocation-type.js'
-import { materializer } from './hyperhtml.js'
+import { materializer } from './maik.js'
 
 const TEXT_NODE = 3
 const DOCUMENT_FRAGMENT_NODE = 11

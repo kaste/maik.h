@@ -2,7 +2,7 @@
 
 // import '../node_modules/rx-lite/rx.lite.js'
 
-import { bind } from '../src/hyperhtml.js'
+import { bind } from '../src/maik.js'
 import { matchInnerHTML } from './utils.js'
 
 const { assert } = chai
