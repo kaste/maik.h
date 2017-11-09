@@ -1,7 +1,7 @@
 import rootImport from 'rollup-plugin-root-import'
 
 export default {
-  input: 'default-maik-bundler.js',
+  input: 'default-maik-bundle.js',
   output: {
     file: 'default-maik.js',
     format: 'iife',
