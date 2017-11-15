@@ -12,6 +12,8 @@ import { $WeakMap } from './pseudo-polyfills.js'
 import { transformers, transformersKeys } from './node-updater.js'
 import { TagInvocation } from './tag-invocation-type.js'
 
+export { repeat } from './utils.js'
+
 const OWNER_SVG_ELEMENT = 'ownerSVGElement'
 
 // ---------------------------------------------

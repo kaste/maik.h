@@ -5,6 +5,7 @@ import {
   makeAttributeSetter,
   makePropertySetter
 } from './attribute-updater.js'
+import { isObservable } from './utils.js'
 
 export const makeRxAwareAttributeUpdateFn = (node, name) => {
   return makeAttributeUpdateFn(node, name, {
@@ -70,7 +71,4 @@ export const makeRxEventHandler = (node, eventName) => {
   }
 }
 
-const isObject = x => x != null && typeof x === 'object'
 
-const isObservable = value =>
-  isObject(value) && Rx.Symbol.observable in value

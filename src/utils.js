@@ -1,3 +1,5 @@
+/* global Rx */
+
 import { $WeakMap } from './pseudo-polyfills.js'
 
 export const memoizeOnFirstArg = fn => {
@@ -49,3 +51,17 @@ export const isArray =
       return toString.call(a) === s
     }
   })()
+
+export const isObject = x => x != null && typeof x === 'object'
+
+export const isObservable = value =>
+  isObject(value) && Rx.Symbol.observable in value
+
+export const repeat = (seq, mapFn) => {
+  if (isObservable(seq)) {
+    return seq.map(items => items.map(mapFn))
+  }
+  return seq.map(mapFn)
+}
+
+
