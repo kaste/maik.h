@@ -118,52 +118,47 @@ const EXTRACT_ATTRIBUTE_NAME = /\s([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)[ 
 
 // look for attributes that contains the comment text
 function attributesSeeker(node, notes, strings) {
+  // Be warned: This is optimized, so that we only loop once over attributes.
+  // In general `NamedNodeMap` is as the name suggest an unordered map, but we
+  // can iterate over it just like an array anyway. The effect is that the
+  // 'order' in attributes does not have to match the order in `strings`.
+  // Now, the normal strategy would be: Iterate over attributes, and just
+  // *count* how many attribute parts (placeholders) we find. Then take that
+  // many parts from strings, process em, and create notes for each.
+  // E.g.
+  // count = attributes.filter(attr => attr.value === UID).length
+  // notes = strings.slice(0, count).map(...createNode)
+
   let foundAttributes = []
-  for (
-    var name,
-      attribute,
-      cache = Object.create(null),
-      attributes = node.attributes,
-      i = 0,
-      length = attributes.length;
-    i < length;
-    i++
-  ) {
-    attribute = attributes[i]
+  let cache = Object.create(null)
+  let attributes = node.attributes
+  for (let i = 0, length = attributes.length; i < length; i++) {
+    let attribute = attributes[i]
     if (attribute.value === UID) {
-      name = attribute.name
-      // this is an IE < 11 thing only
+      let name = attribute.name
+      // According to @WebReflection IE < 11 sometimes has duplicate
+      // attributes. So we cache each name we already found, and fast skip.
       if (name in cache) {
-        // attributes with unrecognized values
-        // are duplicated, even if same attribute, across the node
-        // to fix it, you need to remove it
-        node.removeAttributeNode(attribute)
-        // put a value that won't (hopefully) bother IE
-        cache[name].value = ''
-        // and place the node back
-        node.setAttributeNode(cache[name])
-        // this will decrease attributes count by 1
-        length--
-        // so the loop should be decreased by 1 too
-        i--
-      } else {
-        let prependingString = strings.shift()
-        let match = prependingString.match(EXTRACT_ATTRIBUTE_NAME)
-        if (!match) {
-          throw new Error(
-            `Could not get the attribute name within the following String '${prependingString}'`
-          )
-        }
-        let attributeName = match[1]
-        // `getNamedItem`
-        let attr = (cache[name] =
-          attributes[attributeName] ||
-          attributes[attributeName.toLowerCase()])
-        foundAttributes.push(attr)
-        notes.push(createNote('attr', node, attributeName))
+        continue
       }
+      cache[name] = true
+      foundAttributes.push(attribute)
+
+      // For each matching attribute, we just pull one item from `strings`.
+      // This `item` must not represent the same attribute, so we extract
+      // the attributeName manually.
+      let prependingString = strings.shift()
+      let match = prependingString.match(EXTRACT_ATTRIBUTE_NAME)
+      if (!match) {
+        throw new Error(
+          `Could not get the attribute name within the following String '${prependingString}'`
+        )
+      }
+      let attributeName = match[1]
+      notes.push(createNote('attr', node, attributeName))
     }
   }
+
   for (let i = 0, l = foundAttributes.length, attr; i < l; i++) {
     attr = foundAttributes[i]
     node.removeAttributeNode(attr)
