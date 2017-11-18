@@ -113,14 +113,14 @@ function hyperSeeker(node, notes, strings) {
   }
 }
 
+// eslint-disable-next-line no-control-regex
+const EXTRACT_ATTRIBUTE_NAME = /\s([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)[ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*['"]?$/
+
 // look for attributes that contains the comment text
 function attributesSeeker(node, notes, strings) {
   let foundAttributes = []
   for (
     var name,
-      realName,
-      attrs,
-      attr,
       attribute,
       cache = Object.create(null),
       attributes = node.attributes,
@@ -147,16 +147,20 @@ function attributesSeeker(node, notes, strings) {
         // so the loop should be decreased by 1 too
         i--
       } else {
-        realName = strings
-          .shift()
-          .replace(/^(?:|[\S\s]*?\s)(\S+?)=['"]?$/, '$1')
-        attrs = node.attributes
-        // fallback is needed in both jsdom
-        // and in not-so-standard browsers/engines
-        attr = cache[name] =
-          attrs[realName] || attrs[realName.toLowerCase()]
+        let prependingString = strings.shift()
+        let match = prependingString.match(EXTRACT_ATTRIBUTE_NAME)
+        if (!match) {
+          throw new Error(
+            `Could not get the attribute name within the following String '${prependingString}'`
+          )
+        }
+        let attributeName = match[1]
+        // `getNamedItem`
+        let attr = (cache[name] =
+          attributes[attributeName] ||
+          attributes[attributeName.toLowerCase()])
         foundAttributes.push(attr)
-        notes.push(createNote('attr', node, realName))
+        notes.push(createNote('attr', node, attributeName))
       }
     }
   }
