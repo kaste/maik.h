@@ -47,10 +47,10 @@ function findTagClose(str) {
 }
 
 const getHTML = (strings, nodeMarker = UIDC, attributeMarker = UID) => {
-  const l = strings.length
+  const last = strings.length - 1
   let html = ''
   let isTextBinding = true
-  for (let i = 0; i < l - 1; i++) {
+  for (let i = 0; i < last; i++) {
     const s = strings[i]
     html += s
     // We're in a text position if the previous string closed its tags.
@@ -60,7 +60,7 @@ const getHTML = (strings, nodeMarker = UIDC, attributeMarker = UID) => {
     isTextBinding = closing > -1 ? closing < s.length : isTextBinding
     html += isTextBinding ? nodeMarker : attributeMarker
   }
-  html += strings[l - 1]
+  html += strings[last]
   return html
 }
 
