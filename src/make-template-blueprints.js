@@ -113,13 +113,13 @@ const processFragment = (
 
 const domWalker = (node, nodeMarker, marker) => {
   let stack = [{ nodes: node.childNodes, index: 0 }]
+  let frame
 
   return {
     next: _typeHint => {
-      let frame
       while ((frame = stack[stack.length - 1])) {
-        let { nodes, index: i, cache } = frame
-        TOP: {
+        FOR_LOOP: {
+          let { nodes, index: i, cache } = frame
           for (let l = nodes.length; i < l; i++) {
             let node = nodes[i]
 
@@ -149,13 +149,13 @@ const domWalker = (node, nodeMarker, marker) => {
                   })
                 }
                 frame.index = ++i
-                break TOP
+                break FOR_LOOP
               case COMMENT_NODE:
                 if (node.nodeValue === marker) {
                   frame.index = ++i
                   return node
                 }
-                break
+                continue
               case TEXT_NODE:
                 // Seeing a TEXT_NODE here means that the browser could
                 // actually NOT add a comment node at that particular position.
@@ -163,7 +163,7 @@ const domWalker = (node, nodeMarker, marker) => {
                   frame.index = ++i
                   return node
                 }
-                break
+                continue
             }
           }
           stack.pop()
