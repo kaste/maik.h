@@ -44,10 +44,7 @@ function findTagClose(str) {
   return open > -1 ? str.length : close
 }
 
-const textMarker = UIDC
-const attributeMarker = UID
-
-const getHTML = strings => {
+const getHTML = (strings, nodeMarker = UIDC, attributeMarker = UID) => {
   const l = strings.length
   let html = ''
   let isTextBinding = true
@@ -59,7 +56,7 @@ const getHTML = strings => {
     // state.
     const closing = findTagClose(s)
     isTextBinding = closing > -1 ? closing < s.length : isTextBinding
-    html += isTextBinding ? textMarker : attributeMarker
+    html += isTextBinding ? nodeMarker : attributeMarker
   }
   html += strings[l - 1]
   return html
