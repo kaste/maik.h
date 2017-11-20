@@ -20,9 +20,9 @@ const EXTRACT_ATTRIBUTE_NAME = /\s([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)[ 
   fragment.
  */
 export function createTemplateBlueprint(strings, document, isSvg) {
-  let html = getHTML(strings)
+  let { html, notes } = getHTML(strings)
   let fragment = createFragment(document, isSvg, html)
-  return processFragment(strings, fragment)
+  return processFragment(strings, notes, fragment)
 }
 
 /*
@@ -49,6 +49,8 @@ function findTagClose(str) {
 const getHTML = (strings, nodeMarker = UIDC, attributeMarker = UID) => {
   const last = strings.length - 1
   let html = ''
+  let notes = []
+
   let isTextBinding = true
   for (let i = 0; i < last; i++) {
     const s = strings[i]
@@ -58,14 +60,21 @@ const getHTML = (strings, nodeMarker = UIDC, attributeMarker = UID) => {
     // state.
     const closing = findTagClose(s)
     isTextBinding = closing > -1 ? closing < s.length : isTextBinding
-    html += isTextBinding ? nodeMarker : attributeMarker
+    if (isTextBinding) {
+      html += nodeMarker
+      notes.push({ type: 'node' })
+    } else {
+      html += attributeMarker
+      notes.push({ type: 'attr' })
+    }
   }
   html += strings[last]
-  return html
+  return { html, notes }
 }
 
 const processFragment = (
   strings,
+  firstNotes,
   fragment,
   nodeMarker = UIDC,
   marker = UID
@@ -74,8 +83,9 @@ const processFragment = (
   let walker = domWalker(fragment, nodeMarker, marker)
   let foundAttributes = []
 
-  for (let i = 0, l = strings.length - 1; i < l; i++) {
-    let node = walker.next()
+  for (let i = 0, l = firstNotes.length; i < l; i++) {
+    let typeHint = firstNotes[i].type
+    let node = walker.next(typeHint)
     if (node) {
       switch (node.nodeType) {
         case ATTRIBUTE_NODE: {
@@ -116,7 +126,7 @@ const domWalker = (node, nodeMarker, marker) => {
   let frame
 
   return {
-    next: _typeHint => {
+    next: typeHint => {
       while ((frame = stack[stack.length - 1])) {
         FOR_LOOP: {
           let { nodes, index: i, cache } = frame
@@ -125,6 +135,10 @@ const domWalker = (node, nodeMarker, marker) => {
 
             switch (node.nodeType) {
               case ATTRIBUTE_NODE:
+                if (typeHint !== 'attr') {
+                  stack.pop()
+                  break FOR_LOOP
+                }
                 if (node.value === marker) {
                   let name = node.name
                   // According to @WebReflection IE < 11 sometimes has
@@ -139,23 +153,27 @@ const domWalker = (node, nodeMarker, marker) => {
                   return node
                 }
                 continue
+
               case ELEMENT_NODE:
                 stack.push({ nodes: node.childNodes, index: 0 })
-                if (node.hasAttributes()) {
+                if (typeHint === 'attr' && node.hasAttributes()) {
                   stack.push({
                     nodes: node.attributes,
                     index: 0,
                     cache: Object.create(null)
                   })
                 }
+
                 frame.index = ++i
                 break FOR_LOOP
+
               case COMMENT_NODE:
                 if (node.nodeValue === marker) {
                   frame.index = ++i
                   return node
                 }
                 continue
+
               case TEXT_NODE:
                 // Seeing a TEXT_NODE here means that the browser could
                 // actually NOT add a comment node at that particular position.
