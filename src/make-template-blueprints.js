@@ -1,15 +1,17 @@
 import { createFragment, getChildren } from './dom-utils.js'
-import { indexOf, trim } from './utils.js'
+import { indexOf } from './utils.js'
 
 const EXPANDO = '_hyper_'
 const UID = EXPANDO + ((Math.random() * new Date()) | 0) + ';'
 const UIDC = '<!--' + UID + '-->'
 
 const ELEMENT_NODE = 1
+const ATTRIBUTE_NODE = 2
 const TEXT_NODE = 3
 const COMMENT_NODE = 8
 
-const SHOULD_USE_TEXT_CONTENT = /^style|textarea$/i
+// eslint-disable-next-line no-control-regex
+const EXTRACT_ATTRIBUTE_NAME = /\s([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)[ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*['"]?$/
 
 /*
   Given the unique static strings of a template-tag invocation,
@@ -62,21 +64,6 @@ const getHTML = (strings, nodeMarker = UIDC, attributeMarker = UID) => {
   return html
 }
 
-/*
-  `processFragment` is generally a destructive thing. We walk the
-  initial fragment, remove all the attributes for which the user wants to
-  fill in values (in short: the dynamic attributes), and take notes about
-  every dynamic 'hole' we find.
- */
-// const processFragment = (strings, fragment) => {
-//   let notes = []
-//   hyperSeeker(fragment, notes, strings.slice()) // mutate alert
-//   // Return the mutated fragment and notes about each 'hole'
-//   return { fragment, notes }
-// }
-
-const ATTRIBUTE_NODE = 2
-
 const processFragment = (
   strings,
   fragment,
@@ -128,7 +115,7 @@ const domWalker = (node, nodeMarker, marker) => {
   let stack = [{ nodes: node.childNodes, index: 0 }]
 
   return {
-    next: typeHint => {
+    next: _typeHint => {
       let frame
       while ((frame = stack[stack.length - 1])) {
         let { nodes, index: i, cache } = frame
@@ -183,93 +170,6 @@ const domWalker = (node, nodeMarker, marker) => {
         }
       }
     }
-  }
-}
-
-// walk the fragment tree in search of comments
-function hyperSeeker(node, notes, strings) {
-  for (
-    var child,
-      childNodes = node.childNodes,
-      length = childNodes.length,
-      i = 0;
-    i < length;
-    i++
-  ) {
-    child = childNodes[i]
-    switch (child.nodeType) {
-      case ELEMENT_NODE:
-        attributesSeeker(child, notes, strings)
-        hyperSeeker(child, notes, strings)
-        break
-      case COMMENT_NODE:
-        if (child.textContent === UID) {
-          strings.shift()
-          notes.push(createNote('node', child))
-        }
-        break
-      case TEXT_NODE:
-        if (
-          SHOULD_USE_TEXT_CONTENT.test(node.nodeName) &&
-          trim.call(child.textContent) === UIDC
-        ) {
-          strings.shift()
-          notes.push(createNote('text', node))
-        }
-        break
-    }
-  }
-}
-
-// eslint-disable-next-line no-control-regex
-const EXTRACT_ATTRIBUTE_NAME = /\s([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)[ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*['"]?$/
-
-// look for attributes that contains the comment text
-function attributesSeeker(node, notes, strings) {
-  // Be warned: This is optimized, so that we only loop once over attributes.
-  // In general `NamedNodeMap` is as the name suggest an unordered map, but we
-  // can iterate over it just like an array anyway. The effect is that the
-  // 'order' in attributes does not have to match the order in `strings`.
-  // Now, the normal strategy would be: Iterate over attributes, and just
-  // *count* how many attribute parts (placeholders) we find. Then take that
-  // many parts from strings, process em, and create notes for each.
-  // E.g.
-  // count = attributes.filter(attr => attr.value === UID).length
-  // notes = strings.slice(0, count).map(...createNode)
-
-  let foundAttributes = []
-  let cache = Object.create(null)
-  let attributes = node.attributes
-  for (let i = 0, length = attributes.length; i < length; i++) {
-    let attribute = attributes[i]
-    if (attribute.value === UID) {
-      let name = attribute.name
-      // According to @WebReflection IE < 11 sometimes has duplicate
-      // attributes. So we cache each name we already found, and fast skip.
-      if (name in cache) {
-        continue
-      }
-      cache[name] = true
-      foundAttributes.push(attribute)
-
-      // For each matching attribute, we just pull one item from `strings`.
-      // This `item` must not represent the same attribute, so we extract
-      // the attributeName manually.
-      let prependingString = strings.shift()
-      let match = prependingString.match(EXTRACT_ATTRIBUTE_NAME)
-      if (!match) {
-        throw new Error(
-          `Could not get the attribute name within the following String '${prependingString}'`
-        )
-      }
-      let attributeName = match[1]
-      notes.push(createNote('attr', node, attributeName))
-    }
-  }
-
-  for (let i = 0, l = foundAttributes.length, attr; i < l; i++) {
-    attr = foundAttributes[i]
-    node.removeAttributeNode(attr)
   }
 }
 
