@@ -108,6 +108,12 @@ describe('bind/render', () => {
       matchInnerHTML(`<style>1</style>`, div)
     })
 
+    it('can render style tags (whitespace will be removed)', () => {
+      let render = bind(div)
+      render`<style> ${1} </style>`
+      matchInnerHTML(`<style>1</style>`, div)
+    })
+
     it('can render within textarea tags', () => {
       let render = bind(div)
       render`<textarea>${1}</textarea>`
