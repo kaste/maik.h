@@ -291,7 +291,22 @@ describe('bugs', () => {
     assert.equal(`<x-foo><p>Hello</p></x-foo>`, div.innerHTML)
   })
 
-  it('does not upgrade v1 custom elements with hyper attributes')
+  it('does not upgrade v1 custom elements with internal hyper attributes', done => {
+    class XBar extends HTMLElement {
+      static get observedAttributes() {
+        return ['foo']
+      }
+      attributeChangedCallback(name, oldVal, val) {
+        assert.equal(name, 'foo')
+        assert.equal(val, 'bar')
+        done()
+      }
+    }
+    window.customElements.define('x-bar', XBar)
+
+    let render = bind(div)
+    render`<x-bar foo$=${'bar'}></x-bar>`
+  })
 })
 
 describe('adopt', () => {
