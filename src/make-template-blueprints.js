@@ -159,13 +159,15 @@ const domWalker = (node, nodeMarker = UIDC, attrOrTextMarker = UID) => {
                 frame.index = ++i
                 break TOP
               case COMMENT_NODE:
-                if (node.textContent === attrOrTextMarker) {
+                if (node.nodeValue === attrOrTextMarker) {
                   frame.index = ++i
                   return node
                 }
                 break
               case TEXT_NODE:
-                if (node.textContent.indexOf(nodeMarker) > -1) {
+                // Seeing a TEXT_NODE here means that the browser could
+                // actually NOT add a comment node at that particular position.
+                if (node.nodeValue.indexOf(nodeMarker) > -1) {
                   frame.index = ++i
                   return node
                 }
