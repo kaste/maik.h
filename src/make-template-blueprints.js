@@ -80,9 +80,14 @@ const getHTML = strings => {
 
 const ATTRIBUTE_NODE = 2
 
-const processFragment = (strings, fragment) => {
+const processFragment = (
+  strings,
+  fragment,
+  nodeMarker = UIDC,
+  marker = UID
+) => {
   let notes = []
-  let walker = domWalker(fragment)
+  let walker = domWalker(fragment, nodeMarker, marker)
   let foundAttributes = []
 
   for (let i = 0, l = strings.length - 1; i < l; i++) {
@@ -122,7 +127,7 @@ const processFragment = (strings, fragment) => {
   return { fragment, notes }
 }
 
-const domWalker = (node, nodeMarker = UIDC, attrOrTextMarker = UID) => {
+const domWalker = (node, nodeMarker, marker) => {
   let stack = [{ nodes: node.childNodes, index: 0 }]
 
   return {
@@ -136,7 +141,7 @@ const domWalker = (node, nodeMarker = UIDC, attrOrTextMarker = UID) => {
 
             switch (node.nodeType) {
               case ATTRIBUTE_NODE:
-                if (node.value === attrOrTextMarker) {
+                if (node.value === marker) {
                   let name = node.name
                   // According to @WebReflection IE < 11 sometimes has
                   // duplicate attributes. So we cache each name we already
@@ -162,7 +167,7 @@ const domWalker = (node, nodeMarker = UIDC, attrOrTextMarker = UID) => {
                 frame.index = ++i
                 break TOP
               case COMMENT_NODE:
-                if (node.nodeValue === attrOrTextMarker) {
+                if (node.nodeValue === marker) {
                   frame.index = ++i
                   return node
                 }
