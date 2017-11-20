@@ -1,5 +1,5 @@
 import { createFragment, getChildren } from './dom-utils.js'
-import { indexOf } from './utils.js'
+import { lruCacheOne, indexOf } from './utils.js'
 
 const EXPANDO = '_hyper_'
 const UID = EXPANDO + ((Math.random() * new Date()) | 0) + ';'
@@ -97,6 +97,7 @@ const processFragment = (
   let notes = []
   let walker = domWalker(fragment, nodeMarker, marker)
   let foundAttributes = []
+  let pathTo = lruCacheOne(createPath)
 
   for (let i = 0, l = firstNotes.length; i < l; i++) {
     let earlyNote = firstNotes[i]
@@ -105,15 +106,19 @@ const processFragment = (
     if (node) {
       switch (node.nodeType) {
         case ATTRIBUTE_NODE: {
-          notes.push(createNote('attr', node.ownerElement, earlyNote.name))
+          notes.push({
+            type: 'attr',
+            path: pathTo(node.ownerElement),
+            name: earlyNote.name
+          })
           foundAttributes.push(node)
           break
         }
         case COMMENT_NODE:
-          notes.push(createNote('node', node))
+          notes.push({ type: 'node', path: pathTo(node) })
           break
         case TEXT_NODE:
-          notes.push(createNote('text', node.parentNode))
+          notes.push({ type: 'text', path: pathTo(node.parentNode) })
           break
       }
     }
@@ -196,19 +201,6 @@ const domWalker = (node, nodeMarker, marker) => {
       }
     }
   }
-}
-
-/*
- For each 'hole' we create a note.
- {
-   type: String(node|attr|text),
-   path: Array<accessor, index>, // used to find the node quickly via `getNode`
-   name?: String  // the attribute name, if type is attr
- }
- */
-function createNote(type, node, name) {
-  let path = createPath(node)
-  return { type, path, name }
 }
 
 // given a generic node, returns a path capable
