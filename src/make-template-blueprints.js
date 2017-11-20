@@ -71,11 +71,112 @@ const getHTML = strings => {
   fill in values (in short: the dynamic attributes), and take notes about
   every dynamic 'hole' we find.
  */
+// const processFragment = (strings, fragment) => {
+//   let notes = []
+//   hyperSeeker(fragment, notes, strings.slice()) // mutate alert
+//   // Return the mutated fragment and notes about each 'hole'
+//   return { fragment, notes }
+// }
+
+const ATTRIBUTE_NODE = 2
+
 const processFragment = (strings, fragment) => {
   let notes = []
-  hyperSeeker(fragment, notes, strings.slice()) // mutate alert
-  // Return the mutated fragment and notes about each 'hole'
+  let walker = domWalker(fragment)
+  let foundAttributes = []
+
+  for (let i = 0, l = strings.length - 1; i < l; i++) {
+    let node = walker.next()
+    if (node) {
+      switch (node.nodeType) {
+        case ATTRIBUTE_NODE: {
+          let stringPart = strings[i]
+          let match = EXTRACT_ATTRIBUTE_NAME.exec(stringPart)
+          if (!match) {
+            throw new Error(
+              `Could not get the attribute name within the following String '${stringPart}'`
+            )
+          }
+
+          let attributeName = match[1]
+          notes.push(createNote('attr', node.ownerElement, attributeName))
+          foundAttributes.push(node)
+          break
+        }
+        case COMMENT_NODE:
+          notes.push(createNote('node', node))
+          break
+        case TEXT_NODE:
+          notes.push(createNote('text', node.parentNode))
+          break
+      }
+    }
+  }
+
+  for (let i = 0, l = foundAttributes.length; i < l; i++) {
+    let attribute = foundAttributes[i]
+    let node = attribute.ownerElement
+    node.removeAttributeNode(attribute)
+  }
+
   return { fragment, notes }
+}
+
+const domWalker = (node, nodeMarker = UIDC, attrOrTextMarker = UID) => {
+  let stack = [{ nodes: node.childNodes, index: 0 }]
+  // According to @WebReflection IE < 11 sometimes has duplicate
+  // attributes. So we cache each name we already found to fast skip.
+  let attributesCache = Object.create(null)
+
+  return {
+    next: typeHint => {
+      let frame
+      while ((frame = stack[stack.length - 1])) {
+        let { nodes, index: i } = frame
+        TOP: {
+          for (let l = nodes.length; i < l; i++) {
+            let node = nodes[i]
+
+            switch (node.nodeType) {
+              case ATTRIBUTE_NODE:
+                if (node.value === attrOrTextMarker) {
+                  let name = node.name
+                  if (name in attributesCache) {
+                    continue
+                  }
+                  attributesCache[name] = true
+
+                  frame.index = ++i
+                  return node
+                }
+                continue
+              case ELEMENT_NODE:
+                stack.push({ nodes: node.childNodes, index: 0 })
+                if (node.hasAttributes()) {
+                  attributesCache = Object.create(null)
+                  stack.push({ nodes: node.attributes, index: 0 })
+                }
+                frame.index = ++i
+                break TOP
+              case COMMENT_NODE:
+                if (node.textContent === attrOrTextMarker) {
+                  frame.index = ++i
+                  return node
+                }
+                break
+              case TEXT_NODE:
+                if (node.textContent.indexOf(nodeMarker) > -1) {
+                  frame.index = ++i
+                  return node
+                }
+                break
+            }
+          }
+          stack.pop()
+        }
+      }
+    }
+  }
 }
 
 // walk the fragment tree in search of comments
