@@ -22,7 +22,7 @@ const EXTRACT_ATTRIBUTE_NAME = /\s([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)[ 
 export function createTemplateBlueprint(strings, document, isSvg) {
   let { html, notes } = getHTML(strings)
   let fragment = createFragment(document, isSvg, html)
-  return processFragment(strings, notes, fragment)
+  return processFragment(notes, fragment)
 }
 
 /*
@@ -62,18 +62,33 @@ const getHTML = (strings, nodeMarker = UIDC, attributeMarker = UID) => {
     isTextBinding = closing > -1 ? closing < s.length : isTextBinding
     if (isTextBinding) {
       html += nodeMarker
-      notes.push({ type: 'node' })
+      notes.push({ type: ELEMENT_NODE })
     } else {
       html += attributeMarker
-      notes.push({ type: 'attr' })
+      // In general attributes are stored in `node.attributes` as a map, which
+      // means they're unordered. But user's `strings` is ordered and we MUST
+      // retain this order. For now, we unfortunately extract the wanted
+      // attributeName from the current string (s).
+      let name = extractAttributeName(s)
+      notes.push({ type: ATTRIBUTE_NODE, name })
     }
   }
   html += strings[last]
   return { html, notes }
 }
 
+const extractAttributeName = string => {
+  let match = EXTRACT_ATTRIBUTE_NAME.exec(string)
+  if (!match) {
+    throw new Error(
+      `Could not get the attribute name within the following String '${string}'`
+    )
+  }
+
+  return match[1]
+}
+
 const processFragment = (
-  strings,
   firstNotes,
   fragment,
   nodeMarker = UIDC,
@@ -84,21 +99,13 @@ const processFragment = (
   let foundAttributes = []
 
   for (let i = 0, l = firstNotes.length; i < l; i++) {
-    let typeHint = firstNotes[i].type
+    let earlyNote = firstNotes[i]
+    let typeHint = earlyNote.type
     let node = walker.next(typeHint)
     if (node) {
       switch (node.nodeType) {
         case ATTRIBUTE_NODE: {
-          let stringPart = strings[i]
-          let match = EXTRACT_ATTRIBUTE_NAME.exec(stringPart)
-          if (!match) {
-            throw new Error(
-              `Could not get the attribute name within the following String '${stringPart}'`
-            )
-          }
-
-          let attributeName = match[1]
-          notes.push(createNote('attr', node.ownerElement, attributeName))
+          notes.push(createNote('attr', node.ownerElement, earlyNote.name))
           foundAttributes.push(node)
           break
         }
@@ -135,7 +142,7 @@ const domWalker = (node, nodeMarker, marker) => {
 
             switch (node.nodeType) {
               case ATTRIBUTE_NODE:
-                if (typeHint !== 'attr') {
+                if (typeHint !== ATTRIBUTE_NODE) {
                   stack.pop()
                   break FOR_LOOP
                 }
@@ -156,7 +163,7 @@ const domWalker = (node, nodeMarker, marker) => {
 
               case ELEMENT_NODE:
                 stack.push({ nodes: node.childNodes, index: 0 })
-                if (typeHint === 'attr' && node.hasAttributes()) {
+                if (typeHint === ATTRIBUTE_NODE && node.hasAttributes()) {
                   stack.push({
                     nodes: node.attributes,
                     index: 0,
