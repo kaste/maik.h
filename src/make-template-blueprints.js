@@ -124,15 +124,12 @@ const processFragment = (strings, fragment) => {
 
 const domWalker = (node, nodeMarker = UIDC, attrOrTextMarker = UID) => {
   let stack = [{ nodes: node.childNodes, index: 0 }]
-  // According to @WebReflection IE < 11 sometimes has duplicate
-  // attributes. So we cache each name we already found to fast skip.
-  let attributesCache = Object.create(null)
 
   return {
     next: typeHint => {
       let frame
       while ((frame = stack[stack.length - 1])) {
-        let { nodes, index: i } = frame
+        let { nodes, index: i, cache } = frame
         TOP: {
           for (let l = nodes.length; i < l; i++) {
             let node = nodes[i]
@@ -141,10 +138,13 @@ const domWalker = (node, nodeMarker = UIDC, attrOrTextMarker = UID) => {
               case ATTRIBUTE_NODE:
                 if (node.value === attrOrTextMarker) {
                   let name = node.name
-                  if (name in attributesCache) {
+                  // According to @WebReflection IE < 11 sometimes has
+                  // duplicate attributes. So we cache each name we already
+                  // found to fast skip.
+                  if (name in cache) {
                     continue
                   }
-                  attributesCache[name] = true
+                  cache[name] = true
 
                   frame.index = ++i
                   return node
@@ -153,8 +153,11 @@ const domWalker = (node, nodeMarker = UIDC, attrOrTextMarker = UID) => {
               case ELEMENT_NODE:
                 stack.push({ nodes: node.childNodes, index: 0 })
                 if (node.hasAttributes()) {
-                  attributesCache = Object.create(null)
-                  stack.push({ nodes: node.attributes, index: 0 })
+                  stack.push({
+                    nodes: node.attributes,
+                    index: 0,
+                    cache: Object.create(null)
+                  })
                 }
                 frame.index = ++i
                 break TOP
