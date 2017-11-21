@@ -1,7 +1,6 @@
 import { WK, IE } from './sniffs.js'
 
 const ELEMENT_NODE = 1
-const TEXT_NODE = 3
 
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg'
 
@@ -78,47 +77,6 @@ export const importNode = (function() {
         return document.importNode(fragment, true)
       }
 })()
-
-// IE/Edge gotcha with comment nodes
-export const nextElementSibling = IE
-  ? function nextElementSibling(node) {
-      while ((node = node.nextSibling)) {
-        if (node.nodeType === ELEMENT_NODE) return node
-      }
-      return undefined
-    }
-  : function nextElementSibling(node) {
-      return node.nextElementSibling
-    }
-
-export const previousElementSibling = IE
-  ? function previousElementSibling(node) {
-      while ((node = node.previousSibling)) {
-        if (node.nodeType === ELEMENT_NODE) return node
-      }
-      return undefined
-    }
-  : function previousElementSibling(node) {
-      return node.previousElementSibling
-    }
-
-// remove all text nodes from a virtual space
-export function removePreviousText(parentNode, node) {
-  var previousSibling = node.previousSibling
-  if (previousSibling && previousSibling.nodeType === TEXT_NODE) {
-    parentNode.removeChild(previousSibling)
-    removePreviousText(parentNode, node)
-  }
-}
-
-// avoid errors on obsolete platforms
-export function insertBefore(parentNode, target, after) {
-  if (after) {
-    parentNode.insertBefore(target, after)
-  } else {
-    parentNode.appendChild(target)
-  }
-}
 
 // TODO: `createFragment` has some uniqueness, maybe put it somewhere else?
 

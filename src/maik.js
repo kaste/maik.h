@@ -1,11 +1,7 @@
 /*! (c) 2017 Andrea Giammarchi @WebReflection, (ISC) */
 /*! (c) 2017 herr.kaste, (ISC) */
 
-import {
-  upgrade,
-  instantiateBlueprint,
-  adoptBlueprint
-} from './make-template-instance.js'
+import { upgrade, instantiateBlueprint } from './make-template-instance.js'
 import { render, replaceNodeContent, extractContent } from './render.js'
 import { memoizeOnFirstArg, lruCacheOne, isArray } from './utils.js'
 import { $WeakMap } from './pseudo-polyfills.js'
@@ -100,22 +96,6 @@ export const wireSvg = () => {
   let upgrader = memoizeOnFirstArg(
     upgrade.bind(null, document, true, instantiateBlueprint)
   )
-  return render.bind(null, upgrader, finalSideEffect)
-}
-
-// hyper.adopt(el) 🐣
-// adopt to an already live DOM structure
-// ATTENTION: Only works for flat templates
-export const adopt = node => {
-  let finalSideEffect = () => node
-
-  let document = node.ownerDocument
-  let isSvg = OWNER_SVG_ELEMENT in node
-  let adopter = adoptBlueprint.bind(null, node)
-  let upgrader = memoizeOnFirstArg(
-    upgrade.bind(null, document, isSvg, adopter)
-  )
-
   return render.bind(null, upgrader, finalSideEffect)
 }
 
