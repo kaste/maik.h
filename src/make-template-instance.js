@@ -7,8 +7,7 @@ import {
   makeRxAwareAttributeUpdateFn,
   rxAware
 } from './rx-aware-attribute-updater.js'
-import { getChildren, importNode } from './dom-utils.js'
-import { IE, WK } from './sniffs.js'
+import { importNode } from './dom-utils.js'
 
 const memoizedCreateTemplateBlueprint = memoizeOnFirstArg(
   createTemplateBlueprint
@@ -59,26 +58,9 @@ function createUpdateFn(part, target, childNodes) {
 }
 
 // return the correct node walking through a path
-// fixes IE/Edge issues with attributes and children (fixes old WebKit too)
-var getNode =
-  IE || WK
-    ? function getNode(parentNode, path) {
-        for (var name, i = 0, length = path.length; i < length; i++) {
-          name = path[i++]
-          switch (name) {
-            case 'children':
-              parentNode = getChildren(parentNode)[path[i]]
-              break
-            default:
-              parentNode = parentNode[name][path[i]]
-              break
-          }
-        }
-        return parentNode
-      }
-    : function getNode(parentNode, path) {
-        for (var i = 0, length = path.length; i < length; i++) {
-          parentNode = parentNode[path[i++]][path[i]]
-        }
-        return parentNode
-      }
+function getNode(parentNode, path) {
+  for (var i = 0, length = path.length; i < length; i++) {
+    parentNode = parentNode.childNodes[path[i]]
+  }
+  return parentNode
+}

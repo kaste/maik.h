@@ -1,4 +1,4 @@
-import { createFragment, getChildren } from './dom-utils.js'
+import { createFragment } from './dom-utils.js'
 import { lruCacheOne, indexOf } from './utils.js'
 
 const EXPANDO = '_hyper_'
@@ -203,19 +203,12 @@ const domWalker = (node, nodeMarker, marker) => {
 
 // given a generic node, returns a path capable
 // of retrieving such path back again.
-// TODO: worth passing the index when available ?
 function createPath(node) {
   let path = []
   let parentNode
 
-  if (node.nodeType === COMMENT_NODE) {
-    parentNode = node.parentNode
-    path.unshift('childNodes', indexOf.call(parentNode.childNodes, node))
-    node = parentNode
-  }
-
   while ((parentNode = node.parentNode)) {
-    path.unshift('children', indexOf.call(getChildren(parentNode), node))
+    path.unshift(indexOf.call(parentNode.childNodes, node))
     node = parentNode
   }
   return path

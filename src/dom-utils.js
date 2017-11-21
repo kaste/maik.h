@@ -30,29 +30,6 @@ export const appendNodes =
         }
       }
 
-// returns children or retrieve them in IE/Edge
-export const getChildren =
-  WK || IE
-    ? function getChildren(node) {
-        for (
-          var child,
-            children = [],
-            childNodes = node.childNodes,
-            j = 0,
-            i = 0,
-            length = childNodes.length;
-          i < length;
-          i++
-        ) {
-          child = childNodes[i]
-          if (child.nodeType === ELEMENT_NODE) children[j++] = child
-        }
-        return children
-      }
-    : function getChildren(node) {
-        return node.children
-      }
-
 // IE 11 has problems with cloning templates too
 // it "forgets" empty childNodes
 // @kaste: Does it also have problems with importing nodes?
