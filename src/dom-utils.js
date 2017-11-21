@@ -1,7 +1,3 @@
-import { WK, IE } from './sniffs.js'
-
-const ELEMENT_NODE = 1
-
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg'
 
 const slice = [].slice
