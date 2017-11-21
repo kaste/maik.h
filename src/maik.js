@@ -12,13 +12,8 @@ export { repeat } from './utils.js'
 
 const OWNER_SVG_ELEMENT = 'ownerSVGElement'
 
-// ---------------------------------------------
-// hyperHTML Public API
-// ---------------------------------------------
-
 // The main render factories
 
-// hyper.bind(el) ⚡️
 // render TL inside a DOM node used as context
 export const bind = node => {
   let finalSideEffect = lruCacheOne(replaceNodeContent.bind(null, node))
@@ -73,8 +68,6 @@ export const keyed = (key, tagInvocation) => {
   return tagInvocation
 }
 
-// hyper.wire(obj, 'type:ID') ➰
-// relate a renderer to a generic object
 export function wire(obj, type) {
   return arguments.length < 1
     ? wireContent('html')
