@@ -1,12 +1,5 @@
 import { memoizeOnFirstArg } from './utils.js'
 import { createTemplateBlueprint } from './make-template-blueprints.js'
-import { Aura } from './aura.js'
-import { setAnyContent, setTextContent } from './node-updater.js'
-// import {makeAttributeUpdateFn} from './attribute-updater.js';
-import {
-  makeRxAwareAttributeUpdateFn,
-  rxAware
-} from './rx-aware-attribute-updater.js'
 import { importNode } from './dom-utils.js'
 
 const memoizedCreateTemplateBlueprint = memoizeOnFirstArg(
@@ -33,28 +26,9 @@ function createUpdaters(fragment, parts) {
   let updates = []
   for (var i = 0, length = parts.length; i < length; i++) {
     let part = parts[i]
-    updates[i] = createUpdateFn(part, getNode(fragment, part.path), [])
+    updates[i] = part.updater(getNode(fragment, part.path))
   }
   return updates
-}
-
-const makeRxAwareContentUpdateFn = rxAware(setAnyContent)
-
-// Return function which takes a value and then performs the side-effect
-// of updating the 'hole' in the template; (...) => (val) => IO
-function createUpdateFn(part, target, childNodes) {
-  switch (part.type) {
-    case 'node':
-      return makeRxAwareContentUpdateFn(
-        target,
-        childNodes,
-        new Aura(target, childNodes)
-      )
-    case 'attr':
-      return makeRxAwareAttributeUpdateFn(target, part.name)
-    case 'text':
-      return setTextContent(target)
-  }
 }
 
 // return the correct node walking through a path

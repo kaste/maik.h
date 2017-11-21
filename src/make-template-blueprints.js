@@ -12,14 +12,33 @@ const COMMENT_NODE = 8
 // eslint-disable-next-line no-control-regex
 const EXTRACT_ATTRIBUTE_NAME = /\s([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)[ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*['"]?$/
 
+import {
+  rwAwareNodeCallback,
+  rxAwareAttributeCallback
+} from './std-callbacks.js'
+
 /*
   Given the unique static strings of a template-tag invocation,
   create a blueprint fragment and notes about its dynamic parts
   which we can use over and over for new instances of this (template)
   fragment.
  */
-export function createTemplateBlueprint(strings, document, isSvg) {
-  let { html, notes } = processStrings(strings)
+export function createTemplateBlueprint(
+  strings,
+  document,
+  isSvg,
+  nodeMarker = UIDC,
+  attributeMarker = UID,
+  nodeCallback = rwAwareNodeCallback,
+  attributeCallback = rxAwareAttributeCallback
+) {
+  let { html, notes } = processStrings(
+    strings,
+    nodeMarker,
+    attributeMarker,
+    nodeCallback,
+    attributeCallback
+  )
   let fragment = createFragment(document, isSvg, html)
   return processFragment(notes, fragment)
 }
@@ -51,8 +70,10 @@ function findTagClose(str) {
 // and notes about each 'hole' we found.
 const processStrings = (
   strings,
-  nodeMarker = UIDC,
-  attributeMarker = UID
+  nodeMarker,
+  attributeMarker,
+  nodeCallback,
+  attributeCallback
 ) => {
   const last = strings.length - 1
   let html = ''
@@ -69,7 +90,7 @@ const processStrings = (
     isTextBinding = closing > -1 ? closing < s.length : isTextBinding
     if (isTextBinding) {
       html += nodeMarker
-      notes.push({ type: ELEMENT_NODE })
+      notes.push({ type: ELEMENT_NODE, updater: nodeCallback })
     } else {
       html += attributeMarker
       // In general attributes are stored in `node.attributes` as a map, which
@@ -77,7 +98,7 @@ const processStrings = (
       // retain this order. We therefore extract the wanted attributeName from
       // the current string (`s`).
       let name = extractAttributeName(s)
-      notes.push({ type: ATTRIBUTE_NODE, name })
+      notes.push({ type: ATTRIBUTE_NODE, updater: attributeCallback(name) })
     }
   }
   html += strings[last]
@@ -119,20 +140,25 @@ const processFragment = (
     switch (node.nodeType) {
       case ATTRIBUTE_NODE:
         notes.push({
-          type: 'attr',
           path,
-          name: earlyNote.name
+          updater: earlyNote.updater
         })
         foundAttributes.push(node)
         break
       case COMMENT_NODE:
-        notes.push({ type: 'node', path })
+        notes.push({
+          path,
+          updater: earlyNote.updater('node')
+        })
         break
       case TEXT_NODE:
         // Whenever we encounter a TEXT_NODE, we actually mark and use
         // its parent and the updater will later access basically
         // `node.textContent`. So we slice the last part of the path.
-        notes.push({ type: 'text', path: path.slice(0, -1) })
+        notes.push({
+          path: path.slice(0, -1),
+          updater: earlyNote.updater('text')
+        })
         break
     }
   }

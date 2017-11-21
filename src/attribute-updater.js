@@ -1,37 +1,3 @@
-export const makeAttributeUpdateFn = (
-  node,
-  name,
-  {
-    makeAttributeSetterF = makeAttributeSetter,
-    makePropertySetterF = makePropertySetter,
-    makeEventHandlerF = makeEventHandler
-  } = {}
-) => {
-  if (name.startsWith('on')) {
-    // Allow `onclick` as well as `on-click`
-    let eventName = name[2] === '-' ? name.slice(3) : name.slice(2)
-    eventName = eventName.toLowerCase()
-
-    // This is a stricter rule. hypeHTML had:
-    // if (name.toLowerCase() in node) {
-    //    eventName = eventName.toLowerCase()
-    // }
-    // which allows `onClick` instead of `onclick`, but
-    // otherwise allowed `MixED-Case` events
-
-    return makeEventHandlerF(node, eventName)
-  }
-
-  if (name.endsWith('$')) {
-    let attributeName = name.slice(0, -1)
-    let document = node.ownerDocument
-    let newAttribute = document.createAttribute(attributeName)
-    return makeAttributeSetterF(node, newAttribute)
-  }
-
-  return makePropertySetterF(node, name)
-}
-
 export const makeAttributeSetter = (node, attribute) => {
   let oldValue,
     removedAttribute = true

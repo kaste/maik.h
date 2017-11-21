@@ -1,19 +1,10 @@
 /* global Rx */
 
 import {
-  makeAttributeUpdateFn,
   makeAttributeSetter,
   makePropertySetter
 } from './attribute-updater.js'
 import { isObservable } from './utils.js'
-
-export const makeRxAwareAttributeUpdateFn = (node, name) => {
-  return makeAttributeUpdateFn(node, name, {
-    makeAttributeSetterF: makeRxAttributeSetter,
-    makePropertySetterF: makeRxPropertySetter,
-    makeEventHandlerF: makeRxEventHandler
-  })
-}
 
 export const rxAware = fn => (...args) => {
   let oldValue, subscription
@@ -70,5 +61,3 @@ export const makeRxEventHandler = (node, eventName) => {
     }
   }
 }
-
-

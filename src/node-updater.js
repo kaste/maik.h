@@ -1,5 +1,5 @@
 import { createFragment, createText } from './dom-utils.js'
-import { optimist } from './aura.js'
+import { Aura, optimist } from './aura.js'
 import { isArray, slice, flatten } from './utils.js'
 import { TagInvocation } from './tag-invocation-type.js'
 import { materializer } from './maik.js'
@@ -24,9 +24,13 @@ export const setTextContent = node => {
 
 // `<p>${'any'}</p>`
 // `<li>a</li>${'virtual'}<li>c</li>`
-export const setAnyContent = (node, childNodes, aura) => {
-  var oldValue
+export const setAnyContent = node => {
+  let childNodes = []
+  let aura = new Aura(node, childNodes)
+
+  let oldValue
   let wires = Object.create(null)
+
   return function anyContent(value) {
     var length
     switch (typeof value) {
