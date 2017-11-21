@@ -8,13 +8,18 @@ const memoizedCreateTemplateBlueprint = memoizeOnFirstArg(
 
 // create a template, if unknown
 // upgrade a node to use such template for future updates
-export const upgrade = (document, isSvg, next, strings) => {
+export const upgrade = (
+  document,
+  isSvg,
+  next = instantiateBlueprint,
+  strings
+) => {
   let blueprint = memoizedCreateTemplateBlueprint(strings, document, isSvg)
-  return next(blueprint)
+  return next(document, blueprint)
 }
 
-export const instantiateBlueprint = blueprint => {
-  let fragment = importNode(blueprint.fragment)
+export const instantiateBlueprint = (document, blueprint) => {
+  let fragment = importNode(document, blueprint.fragment)
   let updaters = createUpdaters(fragment, blueprint.notes)
   return { fragment, updaters }
 }

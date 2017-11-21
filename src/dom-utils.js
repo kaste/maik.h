@@ -26,30 +26,26 @@ export const appendNodes =
         }
       }
 
-// IE 11 has problems with cloning templates too
-// it "forgets" empty childNodes
-// @kaste: Does it also have problems with importing nodes?
-export const importNode = (function() {
+// IE 11 has problems with cloning templates, it "forgets" empty childNodes
+export const cloneNode = (function() {
   featureFragment.appendChild(createText(featureFragment, 'g'))
   featureFragment.appendChild(createText(featureFragment, ''))
   return featureFragment.cloneNode(true).childNodes.length === 1
-    ? function importNode(node) {
-        for (
-          var clone = document.importNode(node),
-            childNodes = node.childNodes || [],
-            i = 0,
-            length = childNodes.length;
-          i < length;
-          i++
-        ) {
-          clone.appendChild(importNode(childNodes[i]))
+    ? function cloneNode(node) {
+        let clone = node.cloneNode()
+        let childNodes = node.childNodes || []
+        for (var i = 0, length = childNodes.length; i < length; i++) {
+          clone.appendChild(cloneNode(childNodes[i]))
         }
         return clone
       }
-    : function importNode(fragment) {
-        return document.importNode(fragment, true)
-      }
+    : node => node.cloneNode(true)
 })()
+
+export const importNode =
+  'importNode' in document
+    ? (document, node) => document.importNode(node, true)
+    : (_, node) => cloneNode(node)
 
 // TODO: `createFragment` has some uniqueness, maybe put it somewhere else?
 
