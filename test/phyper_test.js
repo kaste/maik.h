@@ -403,4 +403,20 @@ describe('adopt', () => {
     assert.equal(div.firstElementChild.firstElementChild.prop, 'after')
     matchInnerHTML(`<div><p></p></div>`, div)
   })
+
+  it('creates deep DOM if not present', () => {
+    div.innerHTML = `<div></div>`
+
+    let render = adopt(div)
+    render`<div><p><em class$="${'hello'}"></em></p></div>`
+    matchInnerHTML(`<div><p><em class="hello"></em></p></div>`, div)
+  })
+
+  it('edge case: do not throw if template has zero path lengths', () => {
+    div.innerHTML = ``
+    let render = adopt(div)
+
+    render`${'Hello'}`
+    matchInnerHTML('Hello', div)
+  })
 })

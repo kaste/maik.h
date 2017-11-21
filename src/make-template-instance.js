@@ -93,17 +93,22 @@ function discoverUpdates(contextNode, fragment, parts) {
 
 // given an info, tries to find out the best option
 // to replace or update the content
-function discoverNode(parentNode, virtual, part, childNodes) {
-  for (
-    var target = parentNode,
-      document = parentNode.ownerDocument,
-      path = part.path,
-      virtualNode = getNode(virtual, path),
-      i = 0,
-      length = path.length;
-    i < length;
-    i++
-  ) {
+function discoverNode(parentNode, fragment, part, childNodes) {
+  let path = part.path
+
+  if (part.type !== 'node') {
+    let node = getOrCreateNodesToPath(parentNode, path, fragment)
+    if (part.type === 'attr') {
+      node.removeAttribute(part.name)
+    }
+    return node
+  }
+
+  let document = parentNode.ownerDocument
+  let virtualNode = getNode(fragment, path)
+  let target
+
+  for (var i = 0, length = path.length; i < length; i++) {
     switch (path[i++]) { // <- i++!  path is a flat array of tuples
       case 'children':
         target = getChildren(parentNode)[path[i]]
@@ -111,7 +116,7 @@ function discoverNode(parentNode, virtual, part, childNodes) {
           // if the node is not there, create it
           target = parentNode.appendChild(
             parentNode.ownerDocument.createElement(
-              getNode(virtual, path.slice(0, i + 1)).nodeName
+              getNode(fragment, path.slice(0, i + 1)).nodeName
             )
           )
         }
@@ -166,6 +171,27 @@ function discoverNode(parentNode, virtual, part, childNodes) {
         }
         break
     }
+  }
+  return target
+}
+
+const getOrCreateNodesToPath = (parent, path, fragment) => {
+  let target = parent
+
+  for (let i = 0, l = path.length; i < l; i = i + 2) {
+    // We walk the path, and try to match already present nodes.
+    let currentPath = path.slice(i, i + 2)
+    target = getNode(parent, currentPath)
+    if (!target) {
+      // As soon as a wanted node according to path is not in the actual DOM,
+      // we just look up that node in the fragment, and import it into the
+      // correct position.
+      let wantedNode = getNode(fragment, path.slice(0, i + 2))
+      parent.appendChild(importNode(wantedNode))
+      // We MUST return the end node, so we look it up again.
+      return getNode(parent, path.slice(i))
+    }
+    parent = target
   }
   return target
 }
