@@ -64,8 +64,8 @@ export const materializer = () => {
 }
 
 export const keyed = (key, tagInvocation) => {
-  tagInvocation.key = key
-  return tagInvocation
+  let { strings, values, isSvg } = tagInvocation
+  return new TagInvocation(strings, values, isSvg, key)
 }
 
 export function wire(obj, type) {
