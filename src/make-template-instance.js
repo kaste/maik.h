@@ -108,69 +108,52 @@ function discoverNode(parentNode, fragment, part, childNodes) {
   let virtualNode = getNode(fragment, path)
   let target
 
-  for (var i = 0, length = path.length; i < length; i++) {
-    switch (path[i++]) { // <- i++!  path is a flat array of tuples
-      case 'children':
-        target = getChildren(parentNode)[path[i]]
-        if (!target) {
-          // if the node is not there, create it
-          target = parentNode.appendChild(
-            parentNode.ownerDocument.createElement(
-              getNode(fragment, path.slice(0, i + 1)).nodeName
-            )
-          )
-        }
+  parentNode = getOrCreateNodesToPath(
+    parentNode,
+    path.slice(0, -2),
+    fragment
+  )
 
-        if (i === length - 1 && part.type === 'attr') {
-          target.removeAttribute(part.name)
-        }
-        parentNode = target
-        break
-      case 'childNodes':
-        var children = getChildren(parentNode)
-        var virtualChildren = getChildren(virtualNode.parentNode)
-        target = previousElementSibling(virtualNode)
-        var before = target ? indexOf.call(virtualChildren, target) + 1 : -1
-        target = nextElementSibling(virtualNode)
-        var after = target ? indexOf.call(virtualChildren, target) : -1
-        switch (true) {
-          // `${'virtual'}` is actually resolved as `${'any'}`
-          // case before < 0 && after < 0:
-          //   after = 0;
+  // --- BEGIN original code gibble from @WebReflection
+  // --- No time to think this through
+  let children = getChildren(parentNode)
+  let virtualChildren = getChildren(virtualNode.parentNode)
 
-          case after < 0:
-            // `</a>${'virtual'}`
-            after = children.length
-            break
-          case before < 0:
-            // `${'virtual'}<b>`
-            before = 0
-          /* fallthrough */
-          default:
-            // `</a>${'virtual'}<b>`
-            after = -(virtualChildren.length - after)
-            break
-        }
-        childNodes.push.apply(
-          childNodes,
-          slice.call(children, before, after)
-        )
+  let previousElement = previousElementSibling(virtualNode)
+  let before = previousElement
+    ? indexOf.call(virtualChildren, previousElement) + 1
+    : -1
+  let nextElement = nextElementSibling(virtualNode)
+  let after = nextElement ? indexOf.call(virtualChildren, nextElement) : -1
 
-        target = document.createComment(UID)
-        if (childNodes.length) {
-          insertBefore(
-            parentNode,
-            target,
-            nextElementSibling(childNodes[childNodes.length - 1])
-          )
-        } else {
-          insertBefore(parentNode, target, slice.call(children, after)[0])
-        }
-        if (childNodes.length === 0) {
-          removePreviousText(parentNode, target)
-        }
-        break
-    }
+  switch (true) {
+    case after < 0:
+      // `</a>${'Hello'}`
+      after = children.length
+      break
+    case before < 0:
+      // `${'Hello'}<b>`
+      before = 0
+    /* fallthrough */
+    default:
+      // `</a>${'Hello'}<b>`
+      after = -(virtualChildren.length - after)
+      break
+  }
+  childNodes.push(...slice.call(children, before, after))
+
+  target = document.createComment(UID)
+  if (childNodes.length) {
+    insertBefore(
+      parentNode,
+      target,
+      nextElementSibling(childNodes[childNodes.length - 1])
+    )
+  } else {
+    insertBefore(parentNode, target, slice.call(children, after)[0])
+  }
+  if (childNodes.length === 0) {
+    removePreviousText(parentNode, target)
   }
   return target
 }
