@@ -135,6 +135,11 @@ const processFragment = (
   return { fragment, notes }
 }
 
+// This is like a normal dom walker using `childNodes`, but **without**
+// recursion and resembling an iterator style.
+// It yields only on nodes with markers. The returned `next` function accepts
+// a `typeHint` for optimization purposes. Say, we expect the next node to be
+// a 'node', we can just skip processing attributes.
 const domWalker = (node, nodeMarker, marker) => {
   let stack = [{ nodes: node.childNodes, index: 0 }]
   let frame
@@ -144,6 +149,8 @@ const domWalker = (node, nodeMarker, marker) => {
       while ((frame = stack[stack.length - 1])) {
         FOR_LOOP: {
           let { nodes, index: i, cache } = frame
+          // We don't initialize the for-var `i` as usual, but read it from
+          // the current frame, okay.
           for (let l = nodes.length; i < l; i++) {
             let node = nodes[i]
 
@@ -163,6 +170,11 @@ const domWalker = (node, nodeMarker, marker) => {
                   }
                   cache[name] = true
 
+                  // Generally, as soon as we `yield` something, we store
+                  // the **next** `index` ready for the next for-loop
+                  // iteration in the stack.
+                  // Since we also yield a path to any node, we must always
+                  // decrement the indices for public use. See the `map` below.
                   frame.index = ++i
                   return [
                     node,
