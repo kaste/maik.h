@@ -1,6 +1,5 @@
 import { trim } from './utils.js'
 import { UIDC } from './UID.js'
-import { FF } from './sniffs.js'
 
 const ELEMENT_NODE = 1
 
@@ -47,18 +46,19 @@ export const extractContent = node => {
   return content.length === 1 ? content[0] : content
 }
 
-// both Firefox < 55 and TypeScript have issues with template literals
-// this lazy defined callback should spot issues right away
+// Both Firefox < 55 and TypeScript have issues with template literals.
+// This lazy defined callback should spot issues right away
 // and in the best case scenario become a no-op
 let unique = strings => {
-  if (strings.propertyIsEnumerable('raw') || FF) {
-    const templateObjects = {}
+  const testFn = () => (strings => strings)``
+  if (testFn() === testFn()) {
+    unique = strings => strings
+  } else {
+    const templateObjects = Object.create(null)
     unique = strings => {
-      var key = '_' + strings.join(UIDC)
+      let key = strings.join(UIDC)
       return templateObjects[key] || (templateObjects[key] = strings)
     }
-  } else {
-    unique = strings => strings
   }
   return unique(strings)
 }
