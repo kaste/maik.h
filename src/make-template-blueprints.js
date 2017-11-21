@@ -1,5 +1,4 @@
 import { createFragment } from './dom-utils.js'
-import { lruCacheOne, indexOf } from './utils.js'
 
 const EXPANDO = '_hyper_'
 const UID = EXPANDO + ((Math.random() * new Date()) | 0) + ';'
@@ -97,27 +96,32 @@ const processFragment = (
   let notes = []
   let walker = domWalker(fragment, nodeMarker, marker)
   let foundAttributes = []
-  let pathTo = lruCacheOne(createPath)
 
   for (let i = 0, l = firstNotes.length; i < l; i++) {
     let earlyNote = firstNotes[i]
     let typeHint = earlyNote.type
-    let node = walker.next(typeHint)
+    // The walker will give us a node and a path to that node. The path is
+    // `Array<Int>`, and given a root, we can find that node again doing
+    // `node.childNodes[i].childNodes[j]` and so on.
+    let [node, path] = walker.next(typeHint)
 
     switch (node.nodeType) {
       case ATTRIBUTE_NODE:
         notes.push({
           type: 'attr',
-          path: pathTo(node.ownerElement),
+          path,
           name: earlyNote.name
         })
         foundAttributes.push(node)
         break
       case COMMENT_NODE:
-        notes.push({ type: 'node', path: pathTo(node) })
+        notes.push({ type: 'node', path })
         break
       case TEXT_NODE:
-        notes.push({ type: 'text', path: pathTo(node.parentNode) })
+        // Whenever we encounter a TEXT_NODE, we actually mark and use
+        // its parent and the updater will later access basically
+        // `node.textContent`. So we slice the last part of the path.
+        notes.push({ type: 'text', path: path.slice(0, -1) })
         break
     }
   }
@@ -160,7 +164,14 @@ const domWalker = (node, nodeMarker, marker) => {
                   cache[name] = true
 
                   frame.index = ++i
-                  return node
+                  return [
+                    node,
+                    // For attributes: the top of the stack has the attribute
+                    // index, which we're not interested in at all. Below that
+                    // are the `childNodes` of the ownerElement, which we have
+                    // to skip as well.
+                    stack.slice(0, -2).map(({ index }) => index - 1)
+                  ]
                 }
                 continue
 
@@ -180,7 +191,7 @@ const domWalker = (node, nodeMarker, marker) => {
               case COMMENT_NODE:
                 if (node.nodeValue === marker) {
                   frame.index = ++i
-                  return node
+                  return [node, stack.map(({ index }) => index - 1)]
                 }
                 continue
 
@@ -189,7 +200,7 @@ const domWalker = (node, nodeMarker, marker) => {
                 // actually NOT add a comment node at that particular position.
                 if (node.nodeValue.indexOf(nodeMarker) > -1) {
                   frame.index = ++i
-                  return node
+                  return [node, stack.map(({ index }) => index - 1)]
                 }
                 continue
             }
@@ -199,17 +210,4 @@ const domWalker = (node, nodeMarker, marker) => {
       }
     }
   }
-}
-
-// given a generic node, returns a path capable
-// of retrieving such path back again.
-function createPath(node) {
-  let path = []
-  let parentNode
-
-  while ((parentNode = node.parentNode)) {
-    path.unshift(indexOf.call(parentNode.childNodes, node))
-    node = parentNode
-  }
-  return path
 }
