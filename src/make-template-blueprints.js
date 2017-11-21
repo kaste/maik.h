@@ -94,7 +94,7 @@ const processFragment = (
   marker = UID
 ) => {
   let notes = []
-  let walker = domWalker(fragment, nodeMarker, marker)
+  let nextNode = domWalker(fragment, nodeMarker, marker)
   let foundAttributes = []
 
   for (let i = 0, l = firstNotes.length; i < l; i++) {
@@ -103,7 +103,7 @@ const processFragment = (
     // The walker will give us a node and a path to that node. The path is
     // `Array<Int>`, and given a root, we can find that node again doing
     // `node.childNodes[i].childNodes[j]` and so on.
-    let [node, path] = walker.next(typeHint)
+    let [node, path] = nextNode(typeHint)
 
     switch (node.nodeType) {
       case ATTRIBUTE_NODE:
@@ -144,81 +144,79 @@ const domWalker = (node, nodeMarker, marker) => {
   let stack = [{ nodes: node.childNodes, index: 0 }]
   let frame
 
-  return {
-    next: typeHint => {
-      while ((frame = stack[stack.length - 1])) {
-        FOR_LOOP: {
-          let { nodes, index: i, cache } = frame
-          // We don't initialize the for-var `i` as usual, but read it from
-          // the current frame, okay.
-          for (let l = nodes.length; i < l; i++) {
-            let node = nodes[i]
+  return function next(typeHint) {
+    while ((frame = stack[stack.length - 1])) {
+      FOR_LOOP: {
+        let { nodes, index: i, cache } = frame
+        // We don't initialize the for-var `i` as usual, but read it from
+        // the current frame, okay.
+        for (let l = nodes.length; i < l; i++) {
+          let node = nodes[i]
 
-            switch (node.nodeType) {
-              case ATTRIBUTE_NODE:
-                if (typeHint !== ATTRIBUTE_NODE) {
-                  stack.pop()
-                  break FOR_LOOP
-                }
-                if (node.value === marker) {
-                  let name = node.name
-                  // According to @WebReflection IE < 11 sometimes has
-                  // duplicate attributes. So we cache each name we already
-                  // found to fast skip.
-                  if (name in cache) {
-                    continue
-                  }
-                  cache[name] = true
-
-                  // Generally, as soon as we `yield` something, we store
-                  // the **next** `index` ready for the next for-loop
-                  // iteration in the stack.
-                  // Since we also yield a path to any node, we must always
-                  // decrement the indices for public use. See the `map` below.
-                  frame.index = ++i
-                  return [
-                    node,
-                    // For attributes: the top of the stack has the attribute
-                    // index, which we're not interested in at all. Below that
-                    // are the `childNodes` of the ownerElement, which we have
-                    // to skip as well.
-                    stack.slice(0, -2).map(({ index }) => index - 1)
-                  ]
-                }
-                continue
-
-              case ELEMENT_NODE:
-                stack.push({ nodes: node.childNodes, index: 0 })
-                if (typeHint === ATTRIBUTE_NODE && node.hasAttributes()) {
-                  stack.push({
-                    nodes: node.attributes,
-                    index: 0,
-                    cache: Object.create(null)
-                  })
-                }
-
-                frame.index = ++i
+          switch (node.nodeType) {
+            case ATTRIBUTE_NODE:
+              if (typeHint !== ATTRIBUTE_NODE) {
+                stack.pop()
                 break FOR_LOOP
-
-              case COMMENT_NODE:
-                if (node.nodeValue === marker) {
-                  frame.index = ++i
-                  return [node, stack.map(({ index }) => index - 1)]
+              }
+              if (node.value === marker) {
+                let name = node.name
+                // According to @WebReflection IE < 11 sometimes has
+                // duplicate attributes. So we cache each name we already
+                // found to fast skip.
+                if (name in cache) {
+                  continue
                 }
-                continue
+                cache[name] = true
 
-              case TEXT_NODE:
-                // Seeing a TEXT_NODE here means that the browser could
-                // actually NOT add a comment node at that particular position.
-                if (node.nodeValue.indexOf(nodeMarker) > -1) {
-                  frame.index = ++i
-                  return [node, stack.map(({ index }) => index - 1)]
-                }
-                continue
-            }
+                // Generally, as soon as we `yield` something, we store
+                // the **next** `index` ready for the next for-loop
+                // iteration in the stack.
+                // Since we also yield a path to any node, we must always
+                // decrement the indices for public use. See the `map` below.
+                frame.index = ++i
+                return [
+                  node,
+                  // For attributes: the top of the stack has the attribute
+                  // index, which we're not interested in at all. Below that
+                  // are the `childNodes` of the ownerElement, which we have
+                  // to skip as well.
+                  stack.slice(0, -2).map(({ index }) => index - 1)
+                ]
+              }
+              continue
+
+            case ELEMENT_NODE:
+              stack.push({ nodes: node.childNodes, index: 0 })
+              if (typeHint === ATTRIBUTE_NODE && node.hasAttributes()) {
+                stack.push({
+                  nodes: node.attributes,
+                  index: 0,
+                  cache: Object.create(null)
+                })
+              }
+
+              frame.index = ++i
+              break FOR_LOOP
+
+            case COMMENT_NODE:
+              if (node.nodeValue === marker) {
+                frame.index = ++i
+                return [node, stack.map(({ index }) => index - 1)]
+              }
+              continue
+
+            case TEXT_NODE:
+              // Seeing a TEXT_NODE here means that the browser could
+              // actually NOT add a comment node at that particular position.
+              if (node.nodeValue.indexOf(nodeMarker) > -1) {
+                frame.index = ++i
+                return [node, stack.map(({ index }) => index - 1)]
+              }
+              continue
           }
-          stack.pop()
         }
+        stack.pop()
       }
     }
   }
