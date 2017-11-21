@@ -95,6 +95,9 @@ const processFragment = (
 ) => {
   let notes = []
   let nextNode = domWalker(fragment, nodeMarker, marker)
+  // We HAVE to remove each attribute we will find at the end of this fn,
+  // otherwise the user would see our markers.
+  // This makes the whole function destructive and non-idempotent. :-()
   let foundAttributes = []
 
   for (let i = 0, l = firstNotes.length; i < l; i++) {
