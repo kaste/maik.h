@@ -19,13 +19,13 @@ const EXTRACT_ATTRIBUTE_NAME = /\s([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)[ 
   fragment.
  */
 export function createTemplateBlueprint(strings, document, isSvg) {
-  let { html, notes } = getHTML(strings)
+  let { html, notes } = processStrings(strings)
   let fragment = createFragment(document, isSvg, html)
   return processFragment(notes, fragment)
 }
 
 /*
-  The functions `findTagClose` and `getHTML` originally come from the
+  The functions `findTagClose` and `processStrings` originally come from the
   lit-html PR https://github.com/PolymerLabs/lit-html/pull/153
   authored by https://github.com/jridgewell
 
@@ -45,7 +45,15 @@ function findTagClose(str) {
   return open > -1 ? str.length : close
 }
 
-const getHTML = (strings, nodeMarker = UIDC, attributeMarker = UID) => {
+// In general, walk the static strings the user gave us, and decide which
+// 'hole'/interpolation will be on an attribute or is in a node position.
+// Prepare the HTML we will actually use as a template. Return the HTML
+// and notes about each 'hole' we found.
+const processStrings = (
+  strings,
+  nodeMarker = UIDC,
+  attributeMarker = UID
+) => {
   const last = strings.length - 1
   let html = ''
   let notes = []
@@ -66,8 +74,8 @@ const getHTML = (strings, nodeMarker = UIDC, attributeMarker = UID) => {
       html += attributeMarker
       // In general attributes are stored in `node.attributes` as a map, which
       // means they're unordered. But user's `strings` is ordered and we MUST
-      // retain this order. For now, we unfortunately extract the wanted
-      // attributeName from the current string (s).
+      // retain this order. We therefore extract the wanted attributeName from
+      // the current string (`s`).
       let name = extractAttributeName(s)
       notes.push({ type: ATTRIBUTE_NODE, name })
     }
