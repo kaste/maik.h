@@ -103,24 +103,22 @@ const processFragment = (
     let earlyNote = firstNotes[i]
     let typeHint = earlyNote.type
     let node = walker.next(typeHint)
-    if (node) {
-      switch (node.nodeType) {
-        case ATTRIBUTE_NODE: {
-          notes.push({
-            type: 'attr',
-            path: pathTo(node.ownerElement),
-            name: earlyNote.name
-          })
-          foundAttributes.push(node)
-          break
-        }
-        case COMMENT_NODE:
-          notes.push({ type: 'node', path: pathTo(node) })
-          break
-        case TEXT_NODE:
-          notes.push({ type: 'text', path: pathTo(node.parentNode) })
-          break
-      }
+
+    switch (node.nodeType) {
+      case ATTRIBUTE_NODE:
+        notes.push({
+          type: 'attr',
+          path: pathTo(node.ownerElement),
+          name: earlyNote.name
+        })
+        foundAttributes.push(node)
+        break
+      case COMMENT_NODE:
+        notes.push({ type: 'node', path: pathTo(node) })
+        break
+      case TEXT_NODE:
+        notes.push({ type: 'text', path: pathTo(node.parentNode) })
+        break
     }
   }
 
