@@ -2155,8 +2155,8 @@ rollup-plugin-root-import@^0.2.2:
   resolved "https://registry.yarnpkg.com/rollup-plugin-root-import/-/rollup-plugin-root-import-0.2.2.tgz#1dc0a0366b87fe4ad7e64abea0795a07df874476"
 
 rollup@0.51:
-  version "0.51.0"
-  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.51.0.tgz#bee110391dd42a48d61f31804807a80be4a085e5"
+  version "0.51.8"
+  resolved "https://registry.yarnpkg.com/rollup/-/rollup-0.51.8.tgz#58bd0b642885f4770b5f93cc64f14e4233c2236d"
 
 run-async@^2.2.0:
   version "2.3.0"
