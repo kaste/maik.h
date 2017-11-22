@@ -1,7 +1,7 @@
 /*! (c) 2017 Andrea Giammarchi @WebReflection, (ISC) */
 /*! (c) 2017 herr.kaste, (ISC) */
 
-import { upgrade, instantiateBlueprint } from './make-template-instance.js'
+import { upgrade } from './make-template-instance.js'
 import { render, replaceNodeContent, extractContent } from './render.js'
 import { memoizeOnFirstArg, lruCacheOne, isArray } from './utils.js'
 import { $WeakMap } from './pseudo-polyfills.js'
@@ -20,9 +20,7 @@ export const bind = node => {
 
   let document = node.ownerDocument
   let isSvg = OWNER_SVG_ELEMENT in node
-  let upgrader = memoizeOnFirstArg(
-    upgrade.bind(null, document, isSvg, instantiateBlueprint)
-  )
+  let upgrader = memoizeOnFirstArg(upgrade.bind(null, document, isSvg))
 
   return render.bind(null, upgrader, finalSideEffect)
 }
@@ -52,9 +50,7 @@ export const materialize = tagInvocation => {
 export const materializer = () => {
   let finalSideEffect = lruCacheOne(extractContent)
   let wire = lruCacheOne(isSvg =>
-    memoizeOnFirstArg(
-      upgrade.bind(null, document, isSvg, instantiateBlueprint)
-    )
+    memoizeOnFirstArg(upgrade.bind(null, document, isSvg))
   )
   return tagInvocation => {
     let { strings, values, isSvg } = tagInvocation
@@ -78,17 +74,13 @@ export function wire(obj, type) {
 
 export const wireHtml = () => {
   let finalSideEffect = lruCacheOne(extractContent)
-  let upgrader = memoizeOnFirstArg(
-    upgrade.bind(null, document, false, instantiateBlueprint)
-  )
+  let upgrader = memoizeOnFirstArg(upgrade.bind(null, document, false))
   return render.bind(null, upgrader, finalSideEffect)
 }
 
 export const wireSvg = () => {
   let finalSideEffect = lruCacheOne(extractContent)
-  let upgrader = memoizeOnFirstArg(
-    upgrade.bind(null, document, true, instantiateBlueprint)
-  )
+  let upgrader = memoizeOnFirstArg(upgrade.bind(null, document, true))
   return render.bind(null, upgrader, finalSideEffect)
 }
 
