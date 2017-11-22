@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, minimum-scale=1, initial-scale=1, user-scalable=yes">
+
+  <title></title>
+  <script src="https://unpkg.com/rxjs/bundles/Rx.js"></script>
+  <script src="/default-maik.js"></script>
+  <link rel="stylesheet" type="text/css" href="./styles.css">
+
+
+</head>
+<body>
+  <nav><a href="./">&lt;</a></nav>
+
+  <main></main>
+  <pre id="source_code"></pre>
+
+  <script id="script">
+    let {bind} = maik
+
+    let main = document.querySelector('main')
+    let render = bind(main)
+
+    let color = Rx.Observable
+      .timer(0, 1000)
+      .map(i => i % 2 ? 'coral': 'cornflowerblue')
+
+    render `
+      <style>
+        div {
+          transition: background-color .8s;
+          background-color: ${color};
+          padding: 1em;
+        }
+      </style>
+      <div>The content</div>
+    `
+
+  </script>
+  <script>
+    let script = document.querySelector('#script')
+    let source_code = document.querySelector('#source_code')
+    source_code.innerText = script.text
+  </script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+body {
+  margin: auto;
+  max-width: 900px;
+  background: #e2e2e2;
+}
+nav {
+  padding: 0.5em;
+  font-family: sans-serif;
+  position: sticky;
+  top: 0px;
+  background: inherit;
+  border-bottom: #aaa 1px solid;
+  box-shadow: 0px 9px 24px -20px;
+  margin-bottom: -2px;
+}
+nav a {
+  display: inline-block;
+  padding: 4px;
+  color: #333;
+}
+main {
+  display: flex;
+  justify-content: space-around;
+  background: #eee;
+  padding: 1em;
+  margin: 4px 0;
+}

@@ -1,4 +1,4 @@
-import { createFragment } from './dom-utils.js'
+import { createFragment, appendNodes } from './dom-utils.js'
 import { UID, UIDC } from './UID.js'
 
 const ELEMENT_NODE = 1
@@ -97,7 +97,9 @@ const extractAttributeName = string => {
   let match = EXTRACT_ATTRIBUTE_NAME.exec(string)
   if (!match) {
     throw new Error(
-      `Could not get the attribute name within the following String '${string}'`
+      `Could not get the attribute name within the following String '${
+        string
+      }'`
     )
   }
 
@@ -139,15 +141,46 @@ const processFragment = (
           updater: earlyNote.updater('node')
         })
         break
-      case TEXT_NODE:
-        // Whenever we encounter a TEXT_NODE, we actually mark and use
-        // its parent and the updater will later access basically
-        // `node.textContent`. So we slice the last part of the path.
-        notes.push({
-          path: path.slice(0, -1),
-          updater: earlyNote.updater('text')
-        })
+      case TEXT_NODE: {
+        // Whenever we encounter a TEXT_NODE, the browser actually failed at
+        // inserting a COMMENT_NODE, because that's what we asked for. This
+        // is the case e.g. for <style> tags, which can only have TEXT_NODEs
+        // as children.
+
+        // Now let the input be html`<style>a${}b${}c</style>`. The walker
+        // sees exactly ONE text node (with {{~}} denoting our marker):
+        //   `a{{~}}b${{~}}c`
+        // We have to fulfill TWO notes and since the node updater always
+        // controls and fills the space BEFORE him, we somehow must end up
+        // with three text nodes 'a', 'b' and 'c'; and at the same time push
+        // two notes referring to 'b' and 'c'.
+
+        let document = node.ownerDocument
+        let parentNode = node.parentNode
+        let pathToParent = path.slice(0, -1)
+
+        // We split the string into its static parts.
+        let value = node.nodeValue
+        let parts = value.split(nodeMarker)
+
+        // We reuse the apparent text node for the first part,
+        node.nodeValue = parts[0]
+
+        // For all other parts we create a new text node and a note.
+        let textNodes = []
+        for (let j = 1, l = parts.length; j < l; j++) {
+          textNodes.push(document.createTextNode(parts[j]))
+
+          notes.push({
+            path: [...pathToParent, j],
+            updater: earlyNote.updater('node')
+          })
+          // ATT: We MUST forward the outer for-loop to bypass our walker.
+          earlyNote = firstNotes[++i]
+        }
+        appendNodes(parentNode, textNodes)
         break
+      }
     }
   }
 

@@ -51,10 +51,7 @@ describe('bind/render', () => {
   it('resists XSS by escaping html', () => {
     let render = bind(div)
     render`<p>${'<script>alert("boom");</script>'}</p>`
-    matchInnerHTML(
-      `<p>&lt;script&gt;alert("boom");&lt;/script&gt;</p>`,
-      div
-    )
+    matchInnerHTML(`<p>&lt;script&gt;alert("boom");&lt;/script&gt;</p>`, div)
   })
 
   it('renders raw html if explicitly told', () => {
@@ -108,10 +105,16 @@ describe('bind/render', () => {
       matchInnerHTML(`<style>1</style>`, div)
     })
 
-    it('can render style tags (whitespace will be removed)', () => {
+    it('can render text around the placeholder', () => {
       let render = bind(div)
-      render`<style> ${1} </style>`
-      matchInnerHTML(`<style>1</style>`, div)
+      render`<style>Hello${1}Friend</style>`
+      matchInnerHTML(`<style>Hello1Friend</style>`, div)
+    })
+
+    it('can fill two parts', () => {
+      let render = bind(div)
+      render`<style>${'Hello'}X${'Friend'}X${'Hello'}X${'Friend'}</style>`
+      matchInnerHTML(`<style>HelloXFriendXHelloXFriend</style>`, div)
     })
 
     it('can render within textarea tags', () => {
@@ -308,4 +311,3 @@ describe('bugs', () => {
     render`<x-bar foo$=${'bar'}></x-bar>`
   })
 })
-
