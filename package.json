@@ -8,25 +8,24 @@
   "scripts": {
     "build": "rollup -c",
     "postbuild": "npm run minify",
-
     "buildrx": "rollup src/minimal-rx.js -o minimal-rx.js -f iife -n Rx",
-    "postbuildrx":
-      "uglifyjs minimal-rx.js -o minimal-rx.min.js --compress --mangle",
-
+    "postbuildrx": "uglifyjs minimal-rx.js -o minimal-rx.min.js --compress --mangle",
     "dev": "rollup -c -w",
-
-    "minify":
-      "uglifyjs default-maik.js --comments=\"/^!/\" --compress --mangle -o default-maik.min.js",
+    "minify": "uglifyjs default-maik.js --comments=\"/^!/\" --compress --mangle -o default-maik.min.js",
     "postminify": "gzip -c default-maik.min.js | wc -c",
-
-    "size":
-      "cat default-maik.js | wc -c;cat default-maik.min.js | wc -c;gzip -c default-maik.min.js | wc -c"
+    "size": "cat default-maik.js | wc -c;cat default-maik.min.js | wc -c;gzip -c default-maik.min.js | wc -c"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/kaste/maik.h"
   },
-  "keywords": ["dom", "template", "fast", "performance", "diff"],
+  "keywords": [
+    "dom",
+    "template",
+    "fast",
+    "performance",
+    "diff"
+  ],
   "author": "kaste",
   "license": "ISC",
   "devDependencies": {
