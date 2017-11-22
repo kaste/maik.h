@@ -2,8 +2,17 @@ import { memoizeOnFirstArg } from './utils.js'
 import { createTemplateBlueprint } from './make-template-blueprints.js'
 import { importNode } from './dom-utils.js'
 
+import {
+  rwAwareNodeCallback,
+  rxAwareAttributeCallback
+} from './std-callbacks.js'
+
 const memoizedCreateTemplateBlueprint = memoizeOnFirstArg(
-  createTemplateBlueprint
+  createTemplateBlueprint.bind(
+    null,
+    rwAwareNodeCallback,
+    rxAwareAttributeCallback
+  )
 )
 
 // create a template, if unknown

@@ -1,8 +1,5 @@
 import { createFragment } from './dom-utils.js'
-
-const EXPANDO = '_hyper_'
-const UID = EXPANDO + ((Math.random() * new Date()) | 0) + ';'
-const UIDC = '<!--' + UID + '-->'
+import { UID, UIDC } from './UID.js'
 
 const ELEMENT_NODE = 1
 const ATTRIBUTE_NODE = 2
@@ -12,11 +9,6 @@ const COMMENT_NODE = 8
 // eslint-disable-next-line no-control-regex
 const EXTRACT_ATTRIBUTE_NAME = /\s([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)[ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*['"]?$/
 
-import {
-  rwAwareNodeCallback,
-  rxAwareAttributeCallback
-} from './std-callbacks.js'
-
 /*
   Given the unique static strings of a template-tag invocation,
   create a blueprint fragment and notes about its dynamic parts
@@ -24,23 +16,19 @@ import {
   fragment.
  */
 export function createTemplateBlueprint(
+  nodeCallback,
+  attributeCallback,
   strings,
   document,
-  isSvg,
-  nodeMarker = UIDC,
-  attributeMarker = UID,
-  nodeCallback = rwAwareNodeCallback,
-  attributeCallback = rxAwareAttributeCallback
+  isSvg
 ) {
   let { html, notes } = processStrings(
     strings,
-    nodeMarker,
-    attributeMarker,
     nodeCallback,
     attributeCallback
   )
   let fragment = createFragment(document, isSvg, html)
-  return processFragment(notes, fragment, nodeMarker, attributeMarker)
+  return processFragment(notes, fragment)
 }
 
 /*
@@ -70,10 +58,10 @@ function findTagClose(str) {
 // and notes about each 'hole' we found.
 const processStrings = (
   strings,
-  nodeMarker,
-  attributeMarker,
   nodeCallback,
-  attributeCallback
+  attributeCallback,
+  nodeMarker = UIDC,
+  attributeMarker = UID
 ) => {
   const last = strings.length - 1
   let html = ''
@@ -116,7 +104,12 @@ const extractAttributeName = string => {
   return match[1]
 }
 
-const processFragment = (firstNotes, fragment, nodeMarker, marker) => {
+const processFragment = (
+  firstNotes,
+  fragment,
+  nodeMarker = UIDC,
+  marker = UID
+) => {
   let notes = []
   let nextNode = domWalker(fragment, nodeMarker, marker)
   // We HAVE to remove each attribute we will find at the end of this fn,
