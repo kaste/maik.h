@@ -2,7 +2,7 @@
 /*! (c) 2017 herr.kaste, (ISC) */
 
 import { createTemplateBlueprint as createTemplateBlueprintF } from './make-template-blueprints.js'
-import { upgrade as createTemplateInstanceF } from './make-template-instance.js'
+import { createTemplateInstance as createTemplateInstanceF } from './make-template-instance.js'
 import { render, replaceNodeContent, extractContent } from './render.js'
 import { memoizeOnFirstArg, lruCacheOne, isArray } from './utils.js'
 import { $WeakMap } from './pseudo-polyfills.js'

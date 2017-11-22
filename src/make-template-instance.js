@@ -1,31 +1,29 @@
 import { importNode } from './dom-utils.js'
 
-// create a template, if unknown
-// upgrade a node to use such template for future updates
-export const upgrade = (
+export const createTemplateInstance = (
   createTemplateBlueprint,
   document,
   isSvg,
   strings
 ) => {
-  let blueprint = createTemplateBlueprint(strings, document, isSvg)
-  return instantiateBlueprint(document, blueprint)
+  let { fragment, notes } = createTemplateBlueprint(strings, document, isSvg)
+  return instantiateBlueprint(document, fragment, notes)
 }
 
-export const instantiateBlueprint = (document, blueprint) => {
-  let fragment = importNode(document, blueprint.fragment)
-  let updaters = createUpdaters(fragment, blueprint.notes)
+export const instantiateBlueprint = (document, blueprintFragment, notes) => {
+  let fragment = importNode(document, blueprintFragment)
+  let updaters = readyUpdaters(fragment, notes)
   return { fragment, updaters }
 }
 
-// given a root node and a list of paths
-// creates an array of updates to invoke
-// whenever the next interpolation happens
-function createUpdaters(fragment, parts) {
+// Find the correct live node using our notes, and pass it to the
+// updater fns. Return just the updaters.
+function readyUpdaters(fragment, notes) {
   let updates = []
-  for (var i = 0, length = parts.length; i < length; i++) {
-    let part = parts[i]
-    updates[i] = part.updater(getNode(fragment, part.path))
+  for (var i = 0, length = notes.length; i < length; i++) {
+    let { updater, path } = notes[i]
+    let node = getNode(fragment, path)
+    updates[i] = updater(node)
   }
   return updates
 }
