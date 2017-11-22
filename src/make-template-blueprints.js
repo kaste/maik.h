@@ -40,7 +40,7 @@ export function createTemplateBlueprint(
     attributeCallback
   )
   let fragment = createFragment(document, isSvg, html)
-  return processFragment(notes, fragment)
+  return processFragment(notes, fragment, nodeMarker, attributeMarker)
 }
 
 /*
@@ -116,12 +116,7 @@ const extractAttributeName = string => {
   return match[1]
 }
 
-const processFragment = (
-  firstNotes,
-  fragment,
-  nodeMarker = UIDC,
-  marker = UID
-) => {
+const processFragment = (firstNotes, fragment, nodeMarker, marker) => {
   let notes = []
   let nextNode = domWalker(fragment, nodeMarker, marker)
   // We HAVE to remove each attribute we will find at the end of this fn,
