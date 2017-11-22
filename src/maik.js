@@ -1,7 +1,8 @@
 /*! (c) 2017 Andrea Giammarchi @WebReflection, (ISC) */
 /*! (c) 2017 herr.kaste, (ISC) */
 
-import { upgrade } from './make-template-instance.js'
+import { createTemplateBlueprint as createTemplateBlueprintF } from './make-template-blueprints.js'
+import { upgrade as createTemplateInstanceF } from './make-template-instance.js'
 import { render, replaceNodeContent, extractContent } from './render.js'
 import { memoizeOnFirstArg, lruCacheOne, isArray } from './utils.js'
 import { $WeakMap } from './pseudo-polyfills.js'
@@ -11,6 +12,21 @@ import { TagInvocation } from './tag-invocation-type.js'
 export { repeat } from './utils.js'
 
 const OWNER_SVG_ELEMENT = 'ownerSVGElement'
+
+import {
+  rwAwareNodeCallback,
+  rxAwareAttributeCallback
+} from './std-callbacks.js'
+
+const createTemplateBlueprint = memoizeOnFirstArg(
+  createTemplateBlueprintF.bind(
+    null,
+    rwAwareNodeCallback,
+    rxAwareAttributeCallback
+  )
+)
+
+const upgrade = createTemplateInstanceF.bind(null, createTemplateBlueprint)
 
 // The main render factories
 

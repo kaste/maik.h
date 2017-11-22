@@ -1,24 +1,14 @@
-import { memoizeOnFirstArg } from './utils.js'
-import { createTemplateBlueprint } from './make-template-blueprints.js'
 import { importNode } from './dom-utils.js'
-
-import {
-  rwAwareNodeCallback,
-  rxAwareAttributeCallback
-} from './std-callbacks.js'
-
-const memoizedCreateTemplateBlueprint = memoizeOnFirstArg(
-  createTemplateBlueprint.bind(
-    null,
-    rwAwareNodeCallback,
-    rxAwareAttributeCallback
-  )
-)
 
 // create a template, if unknown
 // upgrade a node to use such template for future updates
-export const upgrade = (document, isSvg, strings) => {
-  let blueprint = memoizedCreateTemplateBlueprint(strings, document, isSvg)
+export const upgrade = (
+  createTemplateBlueprint,
+  document,
+  isSvg,
+  strings
+) => {
+  let blueprint = createTemplateBlueprint(strings, document, isSvg)
   return instantiateBlueprint(document, blueprint)
 }
 
