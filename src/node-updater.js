@@ -41,7 +41,7 @@ export const setAnyContent = node => {
         if (length === 1 && childNodes[0].nodeType === TEXT_NODE) {
           if (oldValue !== value) {
             oldValue = value
-            childNodes[0].textContent = value
+            childNodes[0].nodeValue = value
           }
         } else {
           oldValue = value
