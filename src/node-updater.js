@@ -88,7 +88,8 @@ export const setAnyContent = node => {
                 break
               case 'object':
                 if (isArray(value[0])) {
-                  value = flatten(value)
+                  anyContent(flatten(value))
+                  break
                 }
                 if (isPromise_ish(value[0])) {
                   Promise.all(value).then(anyContent)
