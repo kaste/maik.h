@@ -11,17 +11,6 @@ const DOCUMENT_FRAGMENT_NODE = 11
 export var transformers = {}
 export var transformersKeys = []
 
-// `<style>${'text'}</style>`
-export const setTextContent = node => {
-  var oldValue
-  return function(value) {
-    if (value !== oldValue) {
-      oldValue = value
-      node.textContent = value
-    }
-  }
-}
-
 // `<p>${'any'}</p>`
 // `<li>a</li>${'virtual'}<li>c</li>`
 export const setAnyContent = node => {

@@ -1,4 +1,4 @@
-import { setAnyContent, setTextContent } from './node-updater.js'
+import { setAnyContent } from './node-updater.js'
 import {
   makeAttributeSetter,
   makePropertySetter,
@@ -11,15 +11,7 @@ import {
   rxAware
 } from './rx-aware-attribute-updater.js'
 
-export const nodeCallback = type => {
-  switch (type) {
-    case 'text':
-      return setTextContent
-    case 'node':
-    default:
-      return setAnyContent
-  }
-}
+export const nodeCallback = setAnyContent
 
 export const attributeCallback = (
   attributeName,
@@ -51,17 +43,7 @@ export const attributeCallback = (
   return node => makePropertySetterF(node, attributeName)
 }
 
-const rxAwareContentUpdateFn = rxAware(setAnyContent)
-
-export const rwAwareNodeCallback = type => {
-  switch (type) {
-    case 'text':
-      return setTextContent
-    case 'node':
-    default:
-      return rxAwareContentUpdateFn
-  }
-}
+export const rwAwareNodeCallback = rxAware(setAnyContent)
 
 export const rxAwareAttributeCallback = name => {
   return attributeCallback(name, {

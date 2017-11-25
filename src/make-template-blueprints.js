@@ -138,7 +138,7 @@ const processFragment = (
       case COMMENT_NODE:
         notes.push({
           path,
-          updater: earlyNote.updater('node')
+          updater: earlyNote.updater
         })
         break
       case TEXT_NODE: {
@@ -173,7 +173,7 @@ const processFragment = (
 
           notes.push({
             path: [...pathToParent, j],
-            updater: earlyNote.updater('node')
+            updater: earlyNote.updater
           })
           // ATT: We MUST forward the outer for-loop to bypass our walker.
           earlyNote = firstNotes[++i]
