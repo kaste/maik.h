@@ -1,4 +1,4 @@
-import { importNode } from './dom-utils.js'
+import { importNode, createTreeWalker } from './dom-utils.js'
 
 export const createTemplateInstance = (
   createTemplateBlueprint,
@@ -19,19 +19,18 @@ export const instantiateBlueprint = (document, blueprintFragment, notes) => {
 // Find the correct live node using our notes, and pass it to the
 // updater fns. Return just the updaters.
 function readyUpdaters(fragment, notes) {
+  let walker = createTreeWalker(fragment)
+  let index = -1
   let updates = []
-  for (var i = 0, length = notes.length; i < length; i++) {
-    let { updater, path } = notes[i]
-    let node = getNode(fragment, path)
-    updates[i] = updater(node)
+  for (let i = 0, l = notes.length; i < l; i++) {
+    let { updater, index: nodeIndex } = notes[i]
+
+    while (index < nodeIndex) {
+      index++
+      walker.nextNode()
+    }
+
+    updates[i] = updater(walker.currentNode)
   }
   return updates
-}
-
-// return the correct node walking through a path
-function getNode(parentNode, path) {
-  for (var i = 0, length = path.length; i < length; i++) {
-    parentNode = parentNode.childNodes[path[i]]
-  }
-  return parentNode
 }

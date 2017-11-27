@@ -47,6 +47,12 @@ export const importNode =
     ? (document, node) => document.importNode(node, true)
     : (_, node) => cloneNode(node)
 
+const NODE_FILTER =
+  NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_TEXT
+
+export const createTreeWalker = node =>
+  node.ownerDocument.createTreeWalker(node, NODE_FILTER, null, false)
+
 // TODO: `createFragment` has some uniqueness, maybe put it somewhere else?
 
 // given a node, inject some html and return

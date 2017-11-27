@@ -15,6 +15,7 @@ module.exports = {
         // 'linebreak-style': ['error', 'unix'],
         'no-cond-assign': [1],
         'no-console': [0],
+        'no-constant-condition': ['error', { checkLoops: false }],
         'no-extra-semi': [1],
         'no-fallthrough': [1],
         'no-unused-vars': [

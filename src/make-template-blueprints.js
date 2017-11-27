@@ -1,4 +1,4 @@
-import { createFragment, appendNodes } from './dom-utils.js'
+import { createFragment, createTreeWalker } from './dom-utils.js'
 import { UID, UIDC } from './UID.js'
 
 const ELEMENT_NODE = 1
@@ -106,7 +106,7 @@ const extractAttributeName = string => {
   return match[1]
 }
 
-const processFragment = (
+export const processFragment = (
   firstNotes,
   fragment,
   nodeMarker = UIDC,
@@ -114,32 +114,26 @@ const processFragment = (
 ) => {
   let notes = []
   let nextNode = domWalker(fragment, nodeMarker, marker)
+  // We keep an indexOffset here in case we create text nodes the walker did
+  // not count.
+  let indexOffset = 0
+
   // We HAVE to remove each attribute we will find at the end of this fn,
   // otherwise the user would see our markers.
-  // This makes the whole function destructive and non-idempotent. :-()
   let foundAttributes = []
 
   for (let i = 0, l = firstNotes.length; i < l; i++) {
     let earlyNote = firstNotes[i]
-    let typeHint = earlyNote.type
-    // The walker will give us a node and a path to that node. The path is
-    // `Array<Int>`, and given a root, we can find that node again doing
-    // `node.childNodes[i].childNodes[j]` and so on.
-    let [node, path] = nextNode(typeHint)
+    let { type: typeHint, updater } = earlyNote
 
+    let [node, index] = nextNode(typeHint)
     switch (node.nodeType) {
       case ATTRIBUTE_NODE:
-        notes.push({
-          path,
-          updater: earlyNote.updater
-        })
+        notes.push({ index: index + indexOffset, updater })
         foundAttributes.push(node)
         break
       case COMMENT_NODE:
-        notes.push({
-          path,
-          updater: earlyNote.updater
-        })
+        notes.push({ index: index + indexOffset, updater })
         break
       case TEXT_NODE: {
         // Whenever we encounter a TEXT_NODE, the browser actually failed at
@@ -157,29 +151,31 @@ const processFragment = (
 
         let document = node.ownerDocument
         let parentNode = node.parentNode
-        let pathToParent = path.slice(0, -1)
 
         // We split the string into its static parts.
         let value = node.nodeValue
         let parts = value.split(nodeMarker)
 
-        // We reuse the apparent text node for the first part,
-        node.nodeValue = parts[0]
+        // For all parts except the last one, we create a new text node, and
+        // a note
+        let last = parts.length - 1
+        for (let j = 0; j < last; j++) {
+          let textNode = document.createTextNode(parts[j])
+          // `insertBefore` to not move the position of the domWalker
+          parentNode.insertBefore(textNode, node)
 
-        // For all other parts we create a new text node and a note.
-        let textNodes = []
-        for (let j = 1, l = parts.length; j < l; j++) {
-          textNodes.push(document.createTextNode(parts[j]))
-
+          // Create a note pointing to the *next* node
+          indexOffset++
           notes.push({
-            path: [...pathToParent, j],
+            index: index + indexOffset,
             updater: earlyNote.updater
           })
-          // ATT: We MUST forward the outer for-loop to bypass our walker.
+          // ATT: We MUST forward the outer for-loop
           earlyNote = firstNotes[++i]
         }
-        appendNodes(parentNode, textNodes)
-        break
+
+        // Reuse the existing node for the last part.
+        node.nodeValue = parts[last]
       }
     }
   }
@@ -193,88 +189,59 @@ const processFragment = (
   return { fragment, notes }
 }
 
-// This is like a normal dom walker using `childNodes`, but **without**
-// recursion and resembling an iterator style.
-// It yields only on nodes with markers. The returned `next` function accepts
-// a `typeHint` for optimization purposes. Say, we expect the next node to be
-// a 'node', we can just skip processing attributes.
-const domWalker = (node, nodeMarker, marker) => {
-  let stack = [{ nodes: node.childNodes, index: 0 }]
-  let frame
+// This is like a normal `TreeWalker` but yields only nodes with markers.
+// The returned `next` function accepts a `typeHint` for optimization purposes.
+// Say, we expect the next node to be a 'node', we can just skip processing
+// attributes.
+export const domWalker = (node, nodeMarker, marker) => {
+  let walker = createTreeWalker(node)
+  let index = -1
+
+  let attributes = null
+  let attrIndex = 0
 
   return function next(typeHint) {
-    while ((frame = stack[stack.length - 1])) {
-      FOR_LOOP: {
-        let { nodes, index: i, cache } = frame
-        // We don't initialize the for-var `i` as usual, but read it from
-        // the current frame, okay.
-        for (let l = nodes.length; i < l; i++) {
-          let node = nodes[i]
+    while (true) {
+      if (attributes && typeHint === ATTRIBUTE_NODE) {
+        for (let l = attributes.length; attrIndex < l; attrIndex++) {
+          let attr = attributes[attrIndex]
+          if (attr.value === marker) {
+            // ATT: We MUST increment the for-loop var manually before
+            // returning
+            attrIndex++
+            return [attr, index]
+          }
+        }
+
+        attributes = null
+      }
+
+      WALKER: {
+        while (walker.nextNode()) {
+          index++
+          let node = walker.currentNode
 
           switch (node.nodeType) {
-            case ATTRIBUTE_NODE:
-              if (typeHint !== ATTRIBUTE_NODE) {
-                stack.pop()
-                break FOR_LOOP
-              }
-              if (node.value === marker) {
-                let name = node.name
-                // According to @WebReflection IE < 11 sometimes has
-                // duplicate attributes. So we cache each name we already
-                // found to fast skip.
-                if (name in cache) {
-                  continue
-                }
-                cache[name] = true
-
-                // Generally, as soon as we `yield` something, we store
-                // the **next** `index` ready for the next for-loop
-                // iteration in the stack.
-                // Since we also yield a path to any node, we must always
-                // decrement the indices for public use. See the `map` below.
-                frame.index = ++i
-                return [
-                  node,
-                  // For attributes: the top of the stack has the attribute
-                  // index, which we're not interested in at all. Below that
-                  // are the `childNodes` of the ownerElement, which we have
-                  // to skip as well.
-                  stack.slice(0, -2).map(({ index }) => index - 1)
-                ]
+            case ELEMENT_NODE:
+              if (typeHint === ATTRIBUTE_NODE && node.hasAttributes()) {
+                attributes = node.attributes
+                attrIndex = 0
+                break WALKER
               }
               continue
-
-            case ELEMENT_NODE:
-              stack.push({ nodes: node.childNodes, index: 0 })
-              if (typeHint === ATTRIBUTE_NODE && node.hasAttributes()) {
-                stack.push({
-                  nodes: node.attributes,
-                  index: 0,
-                  cache: Object.create(null)
-                })
-              }
-
-              frame.index = ++i
-              break FOR_LOOP
-
             case COMMENT_NODE:
               if (node.nodeValue === marker) {
-                frame.index = ++i
-                return [node, stack.map(({ index }) => index - 1)]
+                return [node, index]
               }
               continue
-
             case TEXT_NODE:
-              // Seeing a TEXT_NODE here means that the browser could
-              // actually NOT add a comment node at that particular position.
-              if (node.nodeValue.indexOf(nodeMarker) > -1) {
-                frame.index = ++i
-                return [node, stack.map(({ index }) => index - 1)]
+              if (node.nodeValue.indexOf(nodeMarker) !== -1) {
+                return [node, index]
               }
               continue
           }
         }
-        stack.pop()
+        throw new Error('Could not find all placeholders.')
       }
     }
   }
