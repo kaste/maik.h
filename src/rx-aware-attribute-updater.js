@@ -2,7 +2,8 @@
 
 import {
   makeAttributeSetter,
-  makePropertySetter
+  makePropertySetter,
+  makeEventHandler
 } from './attribute-updater.js'
 import { isObservable } from './utils.js'
 
@@ -41,23 +42,13 @@ export const makeRxAttributeSetter = rxAware(makeAttributeSetter)
 export const makeRxPropertySetter = rxAware(makePropertySetter)
 
 export const makeRxEventHandler = (node, eventName) => {
-  let oldValue, subscription
-
-  let observer = Rx.Observable.fromEvent(node, eventName)
+  let sink = makeEventHandler(node, eventName)
 
   return function setter(value) {
-    if (oldValue === value) {
-      return
-    }
-    oldValue = value
-
-    if (subscription) {
-      subscription.unsubscribe()
-      subscription = null
-    }
-
-    if (value) {
-      subscription = observer.subscribe(value)
+    if (isObservable(value)) {
+      sink(ev => value.next(ev))
+    } else {
+      sink(value)
     }
   }
 }

@@ -57,21 +57,20 @@ export const makePropertySetterWithDirtyCheck = (node, propertyName) => {
 }
 
 export const makeEventHandler = (node, eventName) => {
-  let oldValue
+  let currentValue
+  let handler = ev => currentValue(ev)
 
-  return value => {
-    if (oldValue === value) {
+  return nextValue => {
+    if (currentValue === nextValue) {
       return
     }
 
-    if (oldValue) {
-      node.removeEventListener(eventName, oldValue, false)
+    if (!nextValue) {
+      node.removeEventListener(eventName, handler, false)
+    } else if (!currentValue) {
+      node.addEventListener(eventName, handler, false)
     }
 
-    oldValue = value
-
-    if (value) {
-      node.addEventListener(eventName, value, false)
-    }
+    currentValue = nextValue
   }
 }
