@@ -1,11 +1,9 @@
-/* global Rx */
-
 import {
   makeAttributeSetter,
   makePropertySetter,
   makeEventHandler
 } from './attribute-updater.js'
-import { isObservable } from './utils.js'
+import { isObservable, isSubject } from './utils.js'
 
 export const rxAware = fn => (...args) => {
   let oldValue, subscription
@@ -45,7 +43,7 @@ export const makeRxEventHandler = (node, eventName) => {
   let sink = makeEventHandler(node, eventName)
 
   return function setter(value) {
-    if (isObservable(value)) {
+    if (isSubject(value)) {
       sink(ev => value.next(ev))
     } else {
       sink(value)
