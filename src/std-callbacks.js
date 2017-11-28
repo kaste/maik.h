@@ -34,9 +34,7 @@ export const attributeCallback = (
   if (attributeName.endsWith('$')) {
     let newName = attributeName.slice(0, -1)
     return node => {
-      let document = node.ownerDocument
-      let newAttribute = document.createAttribute(newName)
-      return makeAttributeSetterF(node, newAttribute)
+      return makeAttributeSetterF(node, newName)
     }
   }
 

@@ -1,29 +1,21 @@
-export const makeAttributeSetter = (node, attribute) => {
-  let oldValue,
-    removedAttribute = true
+export const makeAttributeSetter = (node, attributeName) => {
+  let oldValue
 
   return value => {
     if (value === true) {
       value = ''
     }
 
-    if (oldValue === value && attribute.value === value) {
+    if (oldValue === value) {
       return
     }
 
     oldValue = value
 
     if (value == null || value === false) {
-      if (!removedAttribute) {
-        removedAttribute = true
-        node.removeAttributeNode(attribute)
-      }
+      node.removeAttribute(attributeName)
     } else {
-      attribute.value = value
-      if (removedAttribute) {
-        removedAttribute = false
-        node.setAttributeNode(attribute)
-      }
+      node.setAttribute(attributeName, value)
     }
   }
 }
