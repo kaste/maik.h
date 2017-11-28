@@ -98,16 +98,7 @@
       let seconds = Rx.Observable
         .interval(1000)
         .scan(a => (a % 10) + 1, 0)
-        // .share()#
-
-      let div = wire()`
-        <div style=${containerStyle}>
-          <div>${
-            SierpinskiTriangle(0, 0, 1000, seconds)
-          }
-          </div>
-        </div>
-      `
+        .share()
 
       let start = new Date().getTime()
       let scaleX = Rx.Observable
@@ -116,9 +107,19 @@
         .map(elapsed => (elapsed/1000) % 10)
         .map(t => 1 + (t > 5 ? 10 - t : t) / 10)
 
-      scaleX
-        .map(scale => `scaleX(${scale / 2.1}) scaleY(0.7) translateZ(0.1px)`)
-        .subscribe(transform => div.style.transform = transform)
+      let style = scaleX
+        .map(scale =>
+          `transform: scaleX(${scale / 2.1}) scaleY(0.7) translateZ(0.1px);`)
+        .map(transform => containerStyle + transform)
+
+      let div = wire()`
+        <div style=${style}>
+          <div>${
+            SierpinskiTriangle(0, 0, 1000, seconds)
+          }
+          </div>
+        </div>
+      `
 
       return div
     }
