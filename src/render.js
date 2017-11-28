@@ -50,7 +50,9 @@ export const extractContent = node => {
 // This lazy defined callback should spot issues right away
 // and in the best case scenario become a no-op
 let unique = strings => {
-  const testFn = () => (strings => strings)``
+  // ATT: If we inline `fn`, uglify changes the behavior of our code!
+  const fn = strings => strings
+  const testFn = () => fn``
   if (testFn() === testFn()) {
     unique = strings => strings
   } else {
