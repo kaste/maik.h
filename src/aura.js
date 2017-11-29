@@ -1,4 +1,4 @@
-import { majinbuu } from '../node_modules/majinbuu/esm/main.js'
+import { majinbuu } from '../node_modules/majinbuu/esm/index.js'
 import { createDocumentFragment } from './dom-utils.js'
 
 // avoid processing too many nodes

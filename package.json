@@ -43,6 +43,6 @@
     "uglify-es": "^3.1.5"
   },
   "dependencies": {
-    "majinbuu": "kaste/majinbuu"
+    "majinbuu": "^2.0.2"
   }
 }
