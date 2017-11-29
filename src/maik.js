@@ -66,7 +66,7 @@ export const materialize = tagInvocation => {
 export const materializer = () => {
   let finalSideEffect = lruCacheOne(extractContent)
   let wire = lruCacheOne(isSvg =>
-    memoizeOnFirstArg(upgrade.bind(null, document, isSvg))
+    lruCacheOne(upgrade.bind(null, document, isSvg))
   )
   return tagInvocation => {
     let { strings, values, isSvg } = tagInvocation
