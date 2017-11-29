@@ -15,13 +15,11 @@ export const memoizeOnFirstArg = fn => {
 export const lruCacheOne = fn => {
   let lastIn, lastOut
   return (arg, ...args) => {
-    if (lastIn === arg) {
-      return lastOut
+    if (lastIn !== arg) {
+      lastIn = arg
+      lastOut = fn(arg, ...args)
     }
-    let curOut = fn(arg, ...args)
-    lastIn = arg
-    lastOut = curOut
-    return curOut
+    return lastOut
   }
 }
 
