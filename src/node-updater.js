@@ -94,13 +94,15 @@ export const setAnyContent = node => {
                 }
               /* fallthrough */
               default:
-                optimist(aura, value)
+                optimist(aura, node, childNodes, value)
                 break
             }
           }
         } else if (isNode_ish(value)) {
           optimist(
             aura,
+            node,
+            childNodes,
             value.nodeType === DOCUMENT_FRAGMENT_NODE
               ? slice.call(value.childNodes)
               : [value]
