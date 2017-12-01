@@ -40,7 +40,7 @@ class NodeHolder {
     this._optimist(slice.call(fragment.childNodes))
   }
 
-  setContent(value) {
+  setNodes(value) {
     this._optimist(
       value.nodeType === DOCUMENT_FRAGMENT_NODE
         ? slice.call(value.childNodes)
@@ -78,7 +78,7 @@ export const setAnyContent = nodeMarker => {
     }
 
     if (isNode_ish(value)) {
-      holder.setContent(value)
+      holder.setNodes(value)
       return
     }
 
@@ -86,7 +86,7 @@ export const setAnyContent = nodeMarker => {
       let tagInvocation = value
       let key = tagInvocation.key || tagInvocation.type
       let wire = wires[key] || (wires[key] = materializer())
-      holder.setContent(wire(tagInvocation))
+      holder.setNodes(wire(tagInvocation))
       return
     }
 
@@ -131,7 +131,7 @@ export const setAnyContent = nodeMarker => {
           }
       }
 
-      holder.setContent(value)
+      holder.setNodes(value)
       return
     }
 
