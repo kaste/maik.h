@@ -126,5 +126,5 @@ function isNode_ish(value) {
 
 // quick and dirty Promise check
 function isPromise_ish(value) {
-  return value != null && 'then' in value
+  return 'then' in value
 }
