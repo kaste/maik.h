@@ -91,6 +91,7 @@ export const setAnyContent = node => {
                     let wire = wires[key] || (wires[key] = materializer())
                     value[i] = wire(tagInvocation)
                   }
+                  value = flatten(value)
                 }
               /* fallthrough */
               default:

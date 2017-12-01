@@ -32,15 +32,20 @@ describe('html tag', () => {
     matchInnerHTML(`Hello friend!`, div)
   })
 
+  it('can render multiple nodes', () => {
+    let greeting = html`<div>Hello</div><div>friend!</div>`
+    let render = bind(div)
+    render`${greeting}`
+
+    matchInnerHTML(`<div>Hello</div><div>friend!</div>`, div)
+  })
+
   it('can render two of the same', () => {
     let greeting = (name = 'friend') => html`<p>Hello ${name}!</p>`
     let render = bind(div)
     render`${greeting()}${greeting()}`
 
-    matchInnerHTML(
-      `<p>Hello ${'friend'}!</p><p>Hello ${'friend'}!</p>`,
-      div
-    )
+    matchInnerHTML(`<p>Hello ${'friend'}!</p><p>Hello ${'friend'}!</p>`, div)
     let p = div.firstElementChild
     render`${greeting('you')}${greeting()}`
     matchInnerHTML(`<p>Hello ${'you'}!</p><p>Hello ${'friend'}!</p>`, div)
@@ -55,11 +60,20 @@ describe('html tag', () => {
     let p = div.firstElementChild
 
     matchInnerHTML(`<p>Hello Tom!</p><p>Hello Bartels!</p>`, div)
+
     friends = ['Henry', 'Bartels']
     render`${friends.map(greeting)}`
 
     matchInnerHTML(`<p>Hello Henry!</p><p>Hello Bartels!</p>`, div)
     assert.equal(p, div.firstElementChild)
+  })
+
+  it('can render array of multiple nodes', () => {
+    let greeting = (name = 'friend') => html`<p>Hello</p><p>${name}!</p>`
+    let friends = ['Tom']
+    let render = bind(div)
+    render`${friends.map(greeting)}`
+    matchInnerHTML(`<p>Hello</p><p>Tom!</p>`, div)
   })
 
   it('render supports keys for efficient updates (1 - using `html(key)`)', () => {
