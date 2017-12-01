@@ -77,7 +77,24 @@ export const setAnyContent = nodeMarker => {
         return
     }
 
-    if (isArray(value)) {
+    if (isNode_ish(value)) {
+      holder.setContent(value)
+      return
+    }
+
+    if (value instanceof TagInvocation) {
+      let tagInvocation = value
+      let key = tagInvocation.key || tagInvocation.type
+      let wire = wires[key] || (wires[key] = materializer())
+      holder.setContent(wire(tagInvocation))
+      return
+    }
+
+    if ('length' in value) {
+      if (!isArray(value)) {
+        value = slice.call(value)
+      }
+
       let length = value.length
 
       if (length === 0) {
@@ -118,19 +135,10 @@ export const setAnyContent = nodeMarker => {
       return
     }
 
-    if (isNode_ish(value)) {
-      holder.setContent(value)
-    } else if (value instanceof TagInvocation) {
-      let tagInvocation = value
-      let key = tagInvocation.key || tagInvocation.type
-      let wire = wires[key] || (wires[key] = materializer())
-      holder.setContent(wire(tagInvocation))
-    } else if (isPromise_ish(value)) {
+    if (isPromise_ish(value)) {
       value.then(anyContent)
     } else if ('html' in value) {
       holder.setHTML(value.html)
-    } else if ('length' in value) {
-      anyContent(slice.call(value))
     } else {
       anyContent(invokeTransformer(value, anyContent, holder))
     }
