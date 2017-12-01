@@ -26,24 +26,31 @@ export const appendNodes =
         }
       }
 
-// IE 11 has problems with cloning templates, it "forgets" empty childNodes
-export const cloneNode = (function() {
+const HAS_IMPORT_NODE = 'importNode' in document
+
+// Fix for IE
+const REMOVES_EMPTY_TEXTNODES_ON_CLONE = (function() {
   featureFragment.appendChild(createText(featureFragment, 'g'))
   featureFragment.appendChild(createText(featureFragment, ''))
-  return featureFragment.cloneNode(true).childNodes.length === 1
-    ? function cloneNode(node) {
-        let clone = node.cloneNode()
-        let childNodes = node.childNodes || []
-        for (var i = 0, length = childNodes.length; i < length; i++) {
-          clone.appendChild(cloneNode(childNodes[i]))
-        }
-        return clone
-      }
-    : node => node.cloneNode(true)
+  let clone = HAS_IMPORT_NODE
+    ? document.importNode(featureFragment, true)
+    : featureFragment.cloneNode(true)
+  return clone.childNodes.length === 1
 })()
 
+export const cloneNode = REMOVES_EMPTY_TEXTNODES_ON_CLONE
+  ? function cloneNode(node) {
+      let clone = node.cloneNode()
+      let childNodes = node.childNodes || []
+      for (var i = 0, l = childNodes.length; i < l; i++) {
+        clone.appendChild(cloneNode(childNodes[i]))
+      }
+      return clone
+    }
+  : node => node.cloneNode(true)
+
 export const importNode =
-  'importNode' in document
+  HAS_IMPORT_NODE && !REMOVES_EMPTY_TEXTNODES_ON_CLONE
     ? (document, node) => document.importNode(node, true)
     : (_, node) => cloneNode(node)
 
