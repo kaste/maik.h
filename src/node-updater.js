@@ -140,7 +140,7 @@ export const setAnyContent = nodeMarker => {
     } else if ('html' in value) {
       holder.setHTML(value.html)
     } else {
-      anyContent(invokeTransformer(value, anyContent, holder))
+      invokeTransformer(value, anyContent, holder)
     }
   }
 }
@@ -150,7 +150,7 @@ function invokeTransformer(value, setValue, nodeHolder) {
   for (var key, i = 0, length = transformersKeys.length; i < length; i++) {
     key = transformersKeys[i]
     if (value.hasOwnProperty(key)) {
-      return transformers[key](value[key], setValue, nodeHolder, value)
+      transformers[key](value[key], setValue, nodeHolder, value)
     }
   }
 }

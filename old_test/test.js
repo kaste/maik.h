@@ -494,15 +494,12 @@ tressa.async(function (done) {
 })
 .then(function () {
   tressa.log('## defined transformer');
-  hyperHTML.define('eUC', encodeURIComponent);
+  hyperHTML.define('eUC', (value, set) => set(encodeURIComponent(value)));
   var div = document.createElement('div');
   hyperHTML.bind(div)`a=${{eUC: 'b c'}}`;
   tressa.assert(/a=b%20c<[^>]+?>/.test(div.innerHTML), 'expected virtual layout');
   hyperHTML.bind(div)`<p>${{eUC: 'b c'}}</p>`;
   tressa.assert(/<p>b%20c<!--.+?--><\/p>/.test(div.innerHTML), 'expected layout');
-  // TODO: for coverage sake
-  //       defined transformer ... so what?
-  hyperHTML.define('eUC', encodeURIComponent);
   //       non existent one ... so what?
   hyperHTML.bind(div)`a=${{nOPE: 'b c'}}`;
 })
