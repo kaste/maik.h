@@ -48,6 +48,24 @@ class NodeHolder {
     )
   }
 
+  appendNodes(value) {
+    if (!isArray(value)) {
+      value = [value]
+    }
+    let nodes = this._managedNodes.slice()
+    nodes.push(...value)
+    this._optimist(nodes)
+  }
+
+  appendText(value) {
+    this.appendNodes([createText(this._marker, value)])
+  }
+
+  appendHTML(value) {
+    let fragment = createFragment(this._marker.ownerDocument, false, value)
+    this.appendNodes(slice.call(fragment.childNodes))
+  }
+
   clear() {
     this._optimist([])
   }
