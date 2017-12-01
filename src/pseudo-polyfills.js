@@ -28,23 +28,6 @@ export const $WeakMap =
       }
     : WeakMap
 
-export const $WeakSet =
-  self.WeakSet === undefined
-    ? function() {
-        var wm = new $WeakMap()
-        // NOT A POLYFILL: simplified ad-hoc for this library cases
-        /* istanbul ignore next */
-        return {
-          add: function(obj) {
-            wm.set(obj, true)
-          },
-          has: function(obj) {
-            return wm.get(obj) === true
-          }
-        }
-      }
-    : WeakSet
-
 // Map with partial double Array fallback
 export const $Map =
   self.Map === undefined
