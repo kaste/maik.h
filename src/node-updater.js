@@ -123,17 +123,17 @@ export const setAnyContent = nodeMarker => {
     } else if ('length' in value) {
       anyContent(slice.call(value))
     } else {
-      anyContent(invokeTransformer(value, anyContent))
+      anyContent(invokeTransformer(value, anyContent, holder))
     }
   }
 }
 
 // last attempt to transform content
-function invokeTransformer(object, callback) {
+function invokeTransformer(value, setValue, nodeHolder) {
   for (var key, i = 0, length = transformersKeys.length; i < length; i++) {
     key = transformersKeys[i]
-    if (object.hasOwnProperty(key)) {
-      return transformers[key](object[key], callback)
+    if (value.hasOwnProperty(key)) {
+      return transformers[key](value[key], setValue, nodeHolder, value)
     }
   }
 }
