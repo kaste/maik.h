@@ -44,9 +44,6 @@ export const setAnyContent = node => {
           }
         }
         break
-      case 'function':
-        anyContent(value(node.parentNode, childNodes, 0))
-        break
       case 'object':
       case 'undefined':
         if (value == null) {
@@ -68,13 +65,6 @@ export const setAnyContent = node => {
               case 'number':
               case 'boolean':
                 anyContent(value.join(''))
-                break
-              case 'function':
-                var parentNode = node.parentNode
-                for (var i = 0; i < length; i++) {
-                  value[i] = value[i](parentNode, childNodes, i)
-                }
-                anyContent(flatten(value))
                 break
               case 'object':
                 if (isArray(value[0])) {

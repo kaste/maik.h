@@ -483,8 +483,6 @@ tressa.async(function (done) {
   tressa.assert(/<p><!--.+?--><\/p>/.test(div.innerHTML), 'expected layout');
   hyperHTML.bind(div)`<p>${{text: '<img>'}}</p>`;
   tressa.assert(/<p>&lt;img&gt;<!--.+?--><\/p>/.test(div.innerHTML), 'expected text');
-  hyperHTML.bind(div)`<p>${function () { return '<b>'; }}</p>`;
-  tressa.assert(/<p>&lt;b&gt;<!--.+?--><\/p>/.test(div.innerHTML), 'expected callback');
 })
 .then(function () {
   tressa.log('## virtual content extras');
