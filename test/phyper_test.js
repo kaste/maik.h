@@ -68,6 +68,14 @@ describe('bind/render', () => {
     matchInnerHTML(`<p><em>foo</em></p>`, div)
   })
 
+  it('renders element collections', () => {
+    let render = bind(div)
+    let span = document.createElement('span')
+    span.innerHTML = '<p>Hello</p><p>friend!</p>'
+    render`${span.childNodes}`
+    matchInnerHTML(`<p>Hello</p><p>friend!</p>`, div)
+  })
+
   context('performance: ', () => {
     it('re-uses the same element on re-render', () => {
       let render = bind(div)
