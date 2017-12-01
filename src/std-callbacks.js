@@ -1,4 +1,4 @@
-import { setAnyContent } from './node-updater.js'
+import { makeNodeSetter } from './node-updater.js'
 import {
   makeAttributeSetter,
   makePropertySetter,
@@ -11,7 +11,7 @@ import {
   rxAware
 } from './rx-aware-attribute-updater.js'
 
-export const nodeCallback = setAnyContent
+export const nodeCallback = makeNodeSetter
 
 export const attributeCallback = (
   attributeName,
@@ -41,7 +41,7 @@ export const attributeCallback = (
   return node => makePropertySetterF(node, attributeName)
 }
 
-export const rwAwareNodeCallback = rxAware(setAnyContent)
+export const rwAwareNodeCallback = rxAware(makeNodeSetter)
 
 export const rxAwareAttributeCallback = name => {
   return attributeCallback(name, {

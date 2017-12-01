@@ -71,7 +71,7 @@ class NodeHolder {
   }
 }
 
-export const setAnyContent = nodeMarker => {
+export const makeNodeSetter = nodeMarker => {
   let holder = new NodeHolder(nodeMarker)
 
   let oldValue
