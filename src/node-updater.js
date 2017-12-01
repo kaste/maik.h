@@ -11,43 +11,70 @@ const DOCUMENT_FRAGMENT_NODE = 11
 export var transformers = {}
 export var transformersKeys = []
 
-export const setAnyContent = node => {
-  let childNodes = []
-  let aura = new Aura(node, childNodes)
+class NodeHolder {
+  constructor(marker, managedNodes = []) {
+    this._marker = marker
+    this._managedNodes = managedNodes
+
+    let aura = new Aura(marker, managedNodes)
+    this._optimist = optimist.bind(null, aura, marker, managedNodes)
+  }
+
+  setText(value) {
+    let managedNodes = this._managedNodes
+    let length = managedNodes.length
+    if (length === 1 && managedNodes[0].nodeType === TEXT_NODE) {
+      // Reuse existing TEXT_NODE
+      managedNodes[0].nodeValue = value
+    } else {
+      if (length) {
+        // Clear everything first, to optimize for the following append
+        this._optimist([])
+      }
+      this._optimist([createText(this._marker, value)])
+    }
+  }
+
+  setHTML(value) {
+    let fragment = createFragment(this._marker.ownerDocument, false, value)
+    this._optimist(slice.call(fragment.childNodes))
+  }
+
+  setContent(value) {
+    this._optimist(
+      value.nodeType === DOCUMENT_FRAGMENT_NODE
+        ? slice.call(value.childNodes)
+        : isArray(value) ? value : [value]
+    )
+  }
+}
+
+export const setAnyContent = nodeMarker => {
+  let holder = new NodeHolder(nodeMarker)
 
   let oldValue
   let wires = Object.create(null)
 
   return function anyContent(value) {
-    var length
-
     if (value == null) {
       value = ''
     }
+
+    if (value === oldValue) {
+      return
+    }
+    oldValue = value
 
     switch (typeof value) {
       case 'string':
       case 'number':
       case 'boolean':
-        length = childNodes.length
-        if (length === 1 && childNodes[0].nodeType === TEXT_NODE) {
-          if (oldValue !== value) {
-            oldValue = value
-            childNodes[0].nodeValue = value
-          }
-        } else {
-          oldValue = value
-          if (length) {
-            // Clear everything first, to optimize for the following append
-            optimist(aura, node, childNodes, [])
-          }
-          optimist(aura, node, childNodes, [createText(node, value)])
-        }
+        holder.setText(value)
         return
     }
 
-    oldValue = value
     if (isArray(value)) {
+      let length
       length = value.length
       if (length === 0) {
         wires = Object.create(null)
@@ -56,7 +83,7 @@ export const setAnyContent = node => {
           case 'string':
           case 'number':
           case 'boolean':
-            anyContent(value.join(''))
+            holder.setText(value.join(''))
             return
           case 'object':
             if (isArray(value[0])) {
@@ -81,26 +108,18 @@ export const setAnyContent = node => {
         }
       }
 
-      optimist(aura, node, childNodes, value)
+      holder.setContent(value)
     } else if (isNode_ish(value)) {
-      optimist(
-        aura,
-        node,
-        childNodes,
-        value.nodeType === DOCUMENT_FRAGMENT_NODE
-          ? slice.call(value.childNodes)
-          : [value]
-      )
+      holder.setContent(value)
     } else if (value instanceof TagInvocation) {
       let tagInvocation = value
       let key = tagInvocation.key || tagInvocation.type
       let wire = wires[key] || (wires[key] = materializer())
-      anyContent(wire(tagInvocation))
+      holder.setContent(wire(tagInvocation))
     } else if (isPromise_ish(value)) {
       value.then(anyContent)
     } else if ('html' in value) {
-      let fragment = createFragment(node.ownerDocument, false, value.html)
-      anyContent(fragment)
+      holder.setHTML(value.html)
     } else if ('length' in value) {
       anyContent(slice.call(value))
     } else {
