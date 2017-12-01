@@ -122,13 +122,10 @@ export const setAnyContent = node => {
         } else if ('any' in value) {
           anyContent(value.any)
         } else if ('html' in value) {
-          var html = [].concat(value.html).join('')
+          var html = value.html
           var fragment = createFragment(node.ownerDocument, false, html)
 
           anyContent(fragment)
-          // aura.splice(0);
-          // childNodes.push.apply(childNodes, fragment.childNodes);
-          // node.parentNode.insertBefore(fragment, node);
         } else if ('length' in value) {
           anyContent(slice.call(value))
         } else {
