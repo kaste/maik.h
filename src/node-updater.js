@@ -77,7 +77,7 @@ export const setAnyContent = nodeMarker => {
   let oldValue
   let wires = Object.create(null)
 
-  return function anyContent(value) {
+  return function setValue(value) {
     if (value == null) {
       value = ''
     }
@@ -129,11 +129,11 @@ export const setAnyContent = nodeMarker => {
           return
         case 'object':
           if (isArray(value[0])) {
-            anyContent(flatten(value))
+            setValue(flatten(value))
             return
           }
           if (isPromise_ish(value[0])) {
-            Promise.all(value).then(anyContent)
+            Promise.all(value).then(setValue)
             return
           }
           if (value[0] instanceof TagInvocation) {
@@ -154,11 +154,11 @@ export const setAnyContent = nodeMarker => {
     }
 
     if (isPromise_ish(value)) {
-      value.then(anyContent)
+      value.then(setValue)
     } else if ('html' in value) {
       holder.setHTML(value.html)
     } else {
-      invokeTransformer(value, anyContent, holder)
+      invokeTransformer(value, setValue, holder)
     }
   }
 }
