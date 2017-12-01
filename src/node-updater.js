@@ -46,78 +46,73 @@ export const setAnyContent = node => {
           optimist(aura, node, childNodes, [createText(node, value)])
         }
         return
+    }
 
-      default:
-        oldValue = value
-        if (isArray(value)) {
-          length = value.length
-          if (length === 0) {
-            wires = Object.create(null)
-          } else {
-            switch (typeof value[0]) {
-              case 'string':
-              case 'number':
-              case 'boolean':
-                anyContent(value.join(''))
-                return
-              case 'object':
-                if (isArray(value[0])) {
-                  anyContent(flatten(value))
-                  return
-                }
-                if (isPromise_ish(value[0])) {
-                  Promise.all(value).then(anyContent)
-                  return
-                }
-                if (value[0] instanceof TagInvocation) {
-                  let newWires = Object.create(null)
-                  for (let i = 0; i < length; i++) {
-                    let tagInvocation = value[i]
-                    let key = tagInvocation.key || i
-                    let wire = (newWires[key] = wires[key] || materializer())
-                    value[i] = wire(tagInvocation)
-                  }
-                  wires = newWires
-                  value = flatten(value)
-                }
+    oldValue = value
+    if (isArray(value)) {
+      length = value.length
+      if (length === 0) {
+        wires = Object.create(null)
+      } else {
+        switch (typeof value[0]) {
+          case 'string':
+          case 'number':
+          case 'boolean':
+            anyContent(value.join(''))
+            return
+          case 'object':
+            if (isArray(value[0])) {
+              anyContent(flatten(value))
+              return
             }
-          }
-
-          optimist(aura, node, childNodes, value)
-        } else if (isNode_ish(value)) {
-          optimist(
-            aura,
-            node,
-            childNodes,
-            value.nodeType === DOCUMENT_FRAGMENT_NODE
-              ? slice.call(value.childNodes)
-              : [value]
-          )
-        } else if (value instanceof TagInvocation) {
-          let tagInvocation = value
-          let key = tagInvocation.key || tagInvocation.type
-          let wire = wires[key] || (wires[key] = materializer())
-          anyContent(wire(tagInvocation))
-        } else if (isPromise_ish(value)) {
-          value.then(anyContent)
-        } else if ('placeholder' in value) {
-          invokeAtDistance(value, anyContent)
-        } else if ('text' in value) {
-          anyContent(String(value.text))
-        } else if ('any' in value) {
-          anyContent(value.any)
-        } else if ('html' in value) {
-          let fragment = createFragment(
-            node.ownerDocument,
-            false,
-            value.html
-          )
-          anyContent(fragment)
-        } else if ('length' in value) {
-          anyContent(slice.call(value))
-        } else {
-          anyContent(invokeTransformer(value, anyContent))
+            if (isPromise_ish(value[0])) {
+              Promise.all(value).then(anyContent)
+              return
+            }
+            if (value[0] instanceof TagInvocation) {
+              let newWires = Object.create(null)
+              for (let i = 0; i < length; i++) {
+                let tagInvocation = value[i]
+                let key = tagInvocation.key || i
+                let wire = (newWires[key] = wires[key] || materializer())
+                value[i] = wire(tagInvocation)
+              }
+              wires = newWires
+              value = flatten(value)
+            }
         }
+      }
+
+      optimist(aura, node, childNodes, value)
+    } else if (isNode_ish(value)) {
+      optimist(
+        aura,
+        node,
+        childNodes,
+        value.nodeType === DOCUMENT_FRAGMENT_NODE
+          ? slice.call(value.childNodes)
+          : [value]
+      )
+    } else if (value instanceof TagInvocation) {
+      let tagInvocation = value
+      let key = tagInvocation.key || tagInvocation.type
+      let wire = wires[key] || (wires[key] = materializer())
+      anyContent(wire(tagInvocation))
+    } else if (isPromise_ish(value)) {
+      value.then(anyContent)
+    } else if ('placeholder' in value) {
+      invokeAtDistance(value, anyContent)
+    } else if ('text' in value) {
+      anyContent(String(value.text))
+    } else if ('any' in value) {
+      anyContent(value.any)
+    } else if ('html' in value) {
+      let fragment = createFragment(node.ownerDocument, false, value.html)
+      anyContent(fragment)
+    } else if ('length' in value) {
+      anyContent(slice.call(value))
+    } else {
+      anyContent(invokeTransformer(value, anyContent))
     }
   }
 }
