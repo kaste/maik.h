@@ -5,7 +5,6 @@ import { createTemplateBlueprint as createTemplateBlueprintF } from './make-temp
 import { createTemplateInstance as createTemplateInstanceF } from './make-template-instance.js'
 import { render, replaceNodeContent, extractContent } from './render.js'
 import { memoizeOnFirstArg, lruCacheOne, isArray } from './utils.js'
-import { $WeakMap } from './pseudo-polyfills.js'
 import { transformers, transformersKeys } from './node-updater.js'
 import { TagInvocation } from './tag-invocation-type.js'
 
@@ -80,12 +79,13 @@ export const keyed = (key, tagInvocation) => {
   return new TagInvocation(strings, values, isSvg, key)
 }
 
-export function wire(obj, type) {
-  return arguments.length < 1
-    ? wireContent('html')
-    : obj == null
-      ? wireContent(type || 'html')
-      : wireWeakly(obj, type || 'html')
+export function wire(type = 'html') {
+  switch (type) {
+    case 'html':
+      return wireHtml()
+    case 'svg':
+      return wireSvg()
+  }
 }
 
 export const wireHtml = () => {
@@ -108,42 +108,5 @@ export const define = (transformer, callback) => {
     transformersKeys.push(transformer)
   }
   transformers[transformer] = callback
-  // TODO: else throw ? console.warn ? who cares ?
 }
 
-// ---------------------------------------------
-// Wires
-// ---------------------------------------------
-
-// [element] = {template, updates};
-var wires = new $WeakMap()
-
-// create a new wire for generic DOM content
-function wireContent(type) {
-  switch (type) {
-    case 'html':
-      return wireHtml()
-    case 'svg':
-      return wireSvg()
-  }
-}
-
-// setup a weak reference if needed and return a wire by ID
-function wireWeakly(obj, type) {
-  var wire = wires.get(obj)
-  var i = type.indexOf(':')
-  var id = type
-  if (-1 < i) {
-    id = type.slice(i + 1)
-    type = type.slice(0, i) || 'html'
-  }
-  if (!wire) {
-    wire = {}
-    wires.set(obj, wire)
-  }
-  return wire[id] || (wire[id] = wireContent(type))
-}
-
-// ---------------------------------------------
-// ⚡️ ️️The End ➰
-// ---------------------------------------------

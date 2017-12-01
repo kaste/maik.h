@@ -1,32 +1,4 @@
-/* Pseudo Polyfills. Just enough to get it working. */
-
-const EXPANDO = '_hyper_' + ((Math.random() * new Date()) | 0) + ';'
-
-// WeakMap with partial EXPANDO fallback
-export const $WeakMap =
-  self.WeakMap === undefined
-    ? function() {
-        // NOT A POLYFILL: simplified ad-hoc for this library cases
-        /* istanbul ignore next */
-        return {
-          delete: function(obj) {
-            delete obj[EXPANDO]
-          },
-          get: function(obj) {
-            return obj[EXPANDO]
-          },
-          has: function(obj) {
-            return EXPANDO in obj
-          },
-          set: function(obj, value) {
-            Object.defineProperty(obj, EXPANDO, {
-              configurable: true,
-              value: value
-            })
-          }
-        }
-      }
-    : WeakMap
+/* Pseudo Polyfill. Just enough to get it working. */
 
 // Map with partial double Array fallback
 export const $Map =
