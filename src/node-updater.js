@@ -122,9 +122,11 @@ export const setAnyContent = node => {
         } else if ('any' in value) {
           anyContent(value.any)
         } else if ('html' in value) {
-          var html = value.html
-          var fragment = createFragment(node.ownerDocument, false, html)
-
+          let fragment = createFragment(
+            node.ownerDocument,
+            false,
+            value.html
+          )
           anyContent(fragment)
         } else if ('length' in value) {
           anyContent(slice.call(value))
