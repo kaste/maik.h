@@ -60,7 +60,8 @@ export const setAnyContent = node => {
         if (isArray(value)) {
           length = value.length
           if (length === 0) {
-            aura.splice(0)
+            wires = Object.create(null)
+            optimist(aura, node, childNodes, value)
           } else {
             switch (typeof value[0]) {
               case 'string':

@@ -76,6 +76,18 @@ describe('html tag', () => {
     matchInnerHTML(`<p>Hello</p><p>Tom!</p>`, div)
   })
 
+  it('clears the space on empty array', () => {
+    let greeting = (name = 'friend') => html`<p>Hello ${name}!</p>`
+    let friends = ['Tom', 'Bartels']
+    let render = bind(div)
+    render`${friends.map(greeting)}`
+
+    friends = []
+    render`${friends.map(greeting)}`
+
+    matchInnerHTML(``, div)
+  })
+
   it('render supports keys for efficient updates (1 - using `html(key)`)', () => {
     let friends = ['Tom', 'Bartels']
     let render = bind(div)

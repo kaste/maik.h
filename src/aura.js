@@ -68,82 +68,72 @@ const splice = [].splice
 const unshift = [].unshift
 
 export function optimist(aura, node, childNodes, virtual) {
+  const pn = node.parentNode
   const vlength = virtual.length
-  // if there are new elements to push ..
-  if (0 < vlength) {
-    const live = childNodes
-    const pn = node.parentNode
-    let llength = live.length
-    let l = 0
-    let v = 0
-    // if the current list is empty, append all nodes
-    if (llength < 1) {
-      push.apply(live, insertManyBefore(pn, virtual, node))
-      return
-    }
-    // if all elements are the same, do pretty much nothing
-    while (l < llength && v < vlength) {
-      // appending nodes/components could be just fine
-      if (live[l] !== virtual[v]) break
-      l++
-      v++
-    }
-    // if we reached the live length destination
-    if (l === llength) {
-      // there could be a tie (nothing to do)
-      if (vlength === llength) return
-      // or there's only to append
-      push.apply(live, insertManyBefore(pn, slice.call(virtual, v), node))
-      return
-    }
-    // if the new length is reached though
-    if (v === vlength) {
-      // there are nodes to remove
-      removeMany(pn, splice.call(live, l, llength))
-      return
-    }
-    // otherwise let's check backward
-    let rl = llength
-    let rv = vlength
-    while (rl && rv) {
-      if (live[--rl] !== virtual[--rv]) {
-        ++rl
-        ++rv
-        break
-      }
-    }
-    // now ... lists are not identical, we know that,
-    // but maybe it was a prepend ... so if live length is covered
-    if (rl < 1) {
-      // return after pre-pending all nodes
-      unshift.apply(
-        live,
-        insertManyBefore(pn, slice.call(virtual, 0, rv), live[0])
-      )
-      return
-    }
-    // or maybe, it was a removal of nodes at the beginning
-    if (rv < 1) {
-      // return after removing all pre-nodes
-      removeMany(pn, splice.call(live, l, rl))
-      return
-    }
-    // now we have a boundary of nodes that need to be changed
-    // all the discovered info ar passed to the engine
-    // Megatron.engine.update(
-    //   utils,
-    //   pn,
-    //   node,
-    //   live,
-    //   l,
-    //   rl,
-    //   llength,
-    //   virtual,
-    //   v,
-    //   rv,
-    //   vlength
-    // )
+  const live = childNodes
+
+  if (vlength === 0) {
+    removeMany(pn, splice.call(live, 0))
+    return
   }
 
+  // if there are new elements to push ..
+  let llength = live.length
+  let l = 0
+  let v = 0
+  // if the current list is empty, append all nodes
+  if (llength < 1) {
+    push.apply(live, insertManyBefore(pn, virtual, node))
+    return
+  }
+  // if all elements are the same, do pretty much nothing
+  while (l < llength && v < vlength) {
+    // appending nodes/components could be just fine
+    if (live[l] !== virtual[v]) break
+    l++
+    v++
+  }
+  // if we reached the live length destination
+  if (l === llength) {
+    // there could be a tie (nothing to do)
+    if (vlength === llength) return
+    // or there's only to append
+    push.apply(live, insertManyBefore(pn, slice.call(virtual, v), node))
+    return
+  }
+  // if the new length is reached though
+  if (v === vlength) {
+    // there are nodes to remove
+    removeMany(pn, splice.call(live, l, llength))
+    return
+  }
+  // otherwise let's check backward
+  let rl = llength
+  let rv = vlength
+  while (rl && rv) {
+    if (live[--rl] !== virtual[--rv]) {
+      ++rl
+      ++rv
+      break
+    }
+  }
+  // now ... lists are not identical, we know that,
+  // but maybe it was a prepend ... so if live length is covered
+  if (rl < 1) {
+    // return after pre-pending all nodes
+    unshift.apply(
+      live,
+      insertManyBefore(pn, slice.call(virtual, 0, rv), live[0])
+    )
+    return
+  }
+  // or maybe, it was a removal of nodes at the beginning
+  if (rv < 1) {
+    // return after removing all pre-nodes
+    removeMany(pn, splice.call(live, l, rl))
+    return
+  }
+
+  // Fallback to majinbuu
   majinbuu(aura, virtual, MAX_LIST_SIZE)
 }
