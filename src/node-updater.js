@@ -22,6 +22,11 @@ export const setAnyContent = node => {
 
   return function anyContent(value) {
     var length
+
+    if (value == null) {
+      value = ''
+    }
+
     switch (typeof value) {
       case 'string':
       case 'number':
@@ -41,14 +46,7 @@ export const setAnyContent = node => {
           optimist(aura, node, childNodes, [createText(node, value)])
         }
         return
-      case 'object':
-      case 'undefined':
-        if (value == null) {
-          oldValue = value
-          anyContent('')
-          return
-        }
-      /* fallthrough */
+
       default:
         oldValue = value
         if (isArray(value)) {
