@@ -43,13 +43,13 @@ export const setAnyContent = node => {
             )
           }
         }
-        break
+        return
       case 'object':
       case 'undefined':
         if (value == null) {
           oldValue = value
           anyContent('')
-          break
+          return
         }
       /* fallthrough */
       default:
@@ -58,22 +58,21 @@ export const setAnyContent = node => {
           length = value.length
           if (length === 0) {
             wires = Object.create(null)
-            optimist(aura, node, childNodes, value)
           } else {
             switch (typeof value[0]) {
               case 'string':
               case 'number':
               case 'boolean':
                 anyContent(value.join(''))
-                break
+                return
               case 'object':
                 if (isArray(value[0])) {
                   anyContent(flatten(value))
-                  break
+                  return
                 }
                 if (isPromise_ish(value[0])) {
                   Promise.all(value).then(anyContent)
-                  break
+                  return
                 }
                 if (value[0] instanceof TagInvocation) {
                   let newWires = Object.create(null)
@@ -86,12 +85,10 @@ export const setAnyContent = node => {
                   wires = newWires
                   value = flatten(value)
                 }
-              /* fallthrough */
-              default:
-                optimist(aura, node, childNodes, value)
-                break
             }
           }
+
+          optimist(aura, node, childNodes, value)
         } else if (isNode_ish(value)) {
           optimist(
             aura,
@@ -126,7 +123,6 @@ export const setAnyContent = node => {
         } else {
           anyContent(invokeTransformer(value, anyContent))
         }
-        break
     }
   }
 }
