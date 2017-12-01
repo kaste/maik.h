@@ -481,18 +481,12 @@ tressa.async(function (done) {
   var div = document.createElement('div');
   hyperHTML.bind(div)`<p>${undefined}</p>`;
   tressa.assert(/<p><!--.+?--><\/p>/.test(div.innerHTML), 'expected layout');
-  hyperHTML.bind(div)`<p>${{text: '<img>'}}</p>`;
-  tressa.assert(/<p>&lt;img&gt;<!--.+?--><\/p>/.test(div.innerHTML), 'expected text');
 })
 .then(function () {
   tressa.log('## virtual content extras');
   var div = document.createElement('div');
   hyperHTML.bind(div)`a ${null}`;
   tressa.assert(/a <[^>]+?>/.test(div.innerHTML), 'expected layout');
-  hyperHTML.bind(div)`a ${{text: '<img>'}}`;
-  tressa.assert(/a &lt;img&gt;<[^>]+?>/.test(div.innerHTML), 'expected text');
-  hyperHTML.bind(div)`a ${{any: 123}}`;
-  tressa.assert(/a 123<[^>]+?>/.test(div.innerHTML), 'expected any');
   hyperHTML.bind(div)`a ${{html: '<b>ok</b>'}}`;
   tressa.assert(/a <b>ok<\/b><[^>]+?>/.test(div.innerHTML), 'expected html');
   hyperHTML.bind(div)`a ${{}}`;
@@ -562,32 +556,6 @@ tressa.async(function (done) {
     'with either null or undefined'
   );
 })
-.then(function () {return tressa.async(function (done) {
-  tressa.log('## placeholder');
-  var div = document.createElement('div');
-  var vdiv = document.createElement('div');
-  hyperHTML.bind(div)`<p>${{eUC: 'b c', placeholder: 'z'}}</p>`;
-  hyperHTML.bind(vdiv)`a=${{eUC: 'b c', placeholder: 'z'}}`;
-  tressa.assert(/<p>z<!--.+?--><\/p>/.test(div.innerHTML), 'expected inner placeholder layout');
-  tressa.assert(/a=z<[^>]+?>/.test(vdiv.innerHTML), 'expected virtual placeholder layout');
-  setTimeout(function () {
-    tressa.assert(/<p>b%20c<!--.+?--><\/p>/.test(div.innerHTML), 'expected inner resolved layout');
-    tressa.assert(/a=b%20c<[^>]+?>/.test(vdiv.innerHTML), 'expected virtual resolved layout');
-    hyperHTML.bind(div)`<p>${{text: 1, placeholder: '9'}}</p>`;
-    setTimeout(function () {
-      tressa.assert(/<p>1<!--.+?--><\/p>/.test(div.innerHTML), 'placeholder with text');
-      hyperHTML.bind(div)`<p>${{any: [1, 2], placeholder: '9'}}</p>`;
-      setTimeout(function () {
-        tressa.assert(/<p>12<!--.+?--><\/p>/.test(div.innerHTML), 'placeholder with any');
-        hyperHTML.bind(div)`<p>${{html: '<b>3</b>', placeholder: '9'}}</p>`;
-        setTimeout(function () {
-          tressa.assert(/<p><b>3<\/b><!--.+?--><\/p>/.test(div.innerHTML), 'placeholder with html');
-          done();
-        }, 10);
-      }, 10);
-    }, 10);
-  }, 10);
-});})
 .then(function () {
   tressa.log('## data=${anyContent}');
   var obj = {rand: Math.random()};
@@ -610,8 +578,7 @@ tressa.async(function (done) {
   function update() {
     hyperHTML.bind(div)`<ul>
       ${todo.map(function (item) {
-        return hyperHTML.wire()
-        `<li data-id=${item.id}>${item.text}</li>`;
+        return hyperHTML.wire()`<li data-id=${item.id}>${item.text}</li>`;
       })}
     </ul>`;
   }

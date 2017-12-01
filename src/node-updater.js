@@ -7,12 +7,10 @@ import { materializer } from './maik.js'
 const TEXT_NODE = 3
 const DOCUMENT_FRAGMENT_NODE = 11
 
-// transformers registry; shared and global
+// transformers registry; shared and global, yeah!
 export var transformers = {}
 export var transformersKeys = []
 
-// `<p>${'any'}</p>`
-// `<li>a</li>${'virtual'}<li>c</li>`
 export const setAnyContent = node => {
   let childNodes = []
   let aura = new Aura(node, childNodes)
@@ -100,12 +98,6 @@ export const setAnyContent = node => {
       anyContent(wire(tagInvocation))
     } else if (isPromise_ish(value)) {
       value.then(anyContent)
-    } else if ('placeholder' in value) {
-      invokeAtDistance(value, anyContent)
-    } else if ('text' in value) {
-      anyContent(String(value.text))
-    } else if ('any' in value) {
-      anyContent(value.any)
     } else if ('html' in value) {
       let fragment = createFragment(node.ownerDocument, false, value.html)
       anyContent(fragment)
@@ -117,24 +109,6 @@ export const setAnyContent = node => {
   }
 }
 
-// use a placeholder and resolve with the right callback
-function invokeAtDistance(value, callback) {
-  callback(value.placeholder)
-  if ('text' in value) {
-    Promise.resolve(value.text)
-      .then(String)
-      .then(callback)
-  } else if ('any' in value) {
-    Promise.resolve(value.any).then(callback)
-  } else if ('html' in value) {
-    Promise.resolve(value.html)
-      .then(asHTML)
-      .then(callback)
-  } else {
-    Promise.resolve(invokeTransformer(value, callback)).then(callback)
-  }
-}
-
 // last attempt to transform content
 function invokeTransformer(object, callback) {
   for (var key, i = 0, length = transformersKeys.length; i < length; i++) {
@@ -143,11 +117,6 @@ function invokeTransformer(object, callback) {
       return transformers[key](object[key], callback)
     }
   }
-}
-
-// return content as html
-function asHTML(html) {
-  return { html: html }
 }
 
 // quick and dirty Node check
