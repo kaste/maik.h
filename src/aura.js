@@ -41,7 +41,9 @@ Aura.prototype.splice = function splice(start) {
 
 function insertManyBefore(parentNode, nodes, node) {
   const length = nodes.length
-  if (length === 1) {
+  if (length === 0) {
+    return
+  } else if (length === 1) {
     parentNode.insertBefore(nodes[0], node)
   } else {
     let i = 0
