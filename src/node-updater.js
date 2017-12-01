@@ -86,12 +86,14 @@ export const setAnyContent = node => {
                   break
                 }
                 if (value[0] instanceof TagInvocation) {
+                  let newWires = Object.create(null)
                   for (let i = 0; i < length; i++) {
                     let tagInvocation = value[i]
                     let key = tagInvocation.key || i
-                    let wire = wires[key] || (wires[key] = materializer())
+                    let wire = (newWires[key] = wires[key] || materializer())
                     value[i] = wire(tagInvocation)
                   }
+                  wires = newWires
                   value = flatten(value)
                 }
               /* fallthrough */
