@@ -35,13 +35,10 @@ export const setAnyContent = node => {
         } else {
           oldValue = value
           if (length) {
-            aura.splice(0, length, createText(node, value))
-          } else {
-            childNodes[0] = node.parentNode.insertBefore(
-              createText(node, value),
-              node
-            )
+            // Clear everything first, to optimize for the following append
+            optimist(aura, node, childNodes, [])
           }
+          optimist(aura, node, childNodes, [createText(node, value)])
         }
         return
       case 'object':
