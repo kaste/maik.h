@@ -29,7 +29,7 @@ class NodeHolder {
     } else {
       if (length) {
         // Clear everything first, to optimize for the following append
-        this._optimist([])
+        this.clear()
       }
       this._optimist([createText(this._marker, value)])
     }
@@ -46,6 +46,10 @@ class NodeHolder {
         ? slice.call(value.childNodes)
         : isArray(value) ? value : [value]
     )
+  }
+
+  clear() {
+    this._optimist([])
   }
 }
 
@@ -74,42 +78,47 @@ export const setAnyContent = nodeMarker => {
     }
 
     if (isArray(value)) {
-      let length
-      length = value.length
+      let length = value.length
+
       if (length === 0) {
         wires = Object.create(null)
-      } else {
-        switch (typeof value[0]) {
-          case 'string':
-          case 'number':
-          case 'boolean':
-            holder.setText(value.join(''))
+        holder.clear()
+        return
+      }
+
+      switch (typeof value[0]) {
+        case 'string':
+        case 'number':
+        case 'boolean':
+          holder.setText(value.join(''))
+          return
+        case 'object':
+          if (isArray(value[0])) {
+            anyContent(flatten(value))
             return
-          case 'object':
-            if (isArray(value[0])) {
-              anyContent(flatten(value))
-              return
+          }
+          if (isPromise_ish(value[0])) {
+            Promise.all(value).then(anyContent)
+            return
+          }
+          if (value[0] instanceof TagInvocation) {
+            let newWires = Object.create(null)
+            for (let i = 0; i < length; i++) {
+              let tagInvocation = value[i]
+              let key = tagInvocation.key || i
+              let wire = (newWires[key] = wires[key] || materializer())
+              value[i] = wire(tagInvocation)
             }
-            if (isPromise_ish(value[0])) {
-              Promise.all(value).then(anyContent)
-              return
-            }
-            if (value[0] instanceof TagInvocation) {
-              let newWires = Object.create(null)
-              for (let i = 0; i < length; i++) {
-                let tagInvocation = value[i]
-                let key = tagInvocation.key || i
-                let wire = (newWires[key] = wires[key] || materializer())
-                value[i] = wire(tagInvocation)
-              }
-              wires = newWires
-              value = flatten(value)
-            }
-        }
+            wires = newWires
+            value = flatten(value)
+          }
       }
 
       holder.setContent(value)
-    } else if (isNode_ish(value)) {
+      return
+    }
+
+    if (isNode_ish(value)) {
       holder.setContent(value)
     } else if (value instanceof TagInvocation) {
       let tagInvocation = value
