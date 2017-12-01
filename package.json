@@ -9,9 +9,11 @@
     "build": "rollup -c",
     "postbuild": "npm run minify",
     "dev": "rollup -c -w",
+
     "minify": "uglifyjs default-maik.js --comments=\"/^!/\" --compress --mangle -o default-maik.min.js",
-    "postminify": "gzip -c default-maik.min.js | wc -c",
-    "size": "cat default-maik.js | wc -c;cat default-maik.min.js | wc -c;gzip -c default-maik.min.js | wc -c"
+
+    "size": "gzip -c default-maik.min.js | wc -c",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
