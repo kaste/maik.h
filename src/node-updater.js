@@ -11,7 +11,7 @@ const DOCUMENT_FRAGMENT_NODE = 11
 export var transformers = {}
 export var transformersKeys = []
 
-class NodeHolder {
+export class NodeHolder {
   constructor(marker, managedNodes = []) {
     this._marker = marker
     this._managedNodes = managedNodes
