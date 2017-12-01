@@ -161,7 +161,7 @@ tressa.async(function (done) {
     var same = update();
     tressa.assert(node === same, 'same node returned');
 
-    render = hyperHTML.wire(null);
+    render = hyperHTML.wire();
     update = function () {
       return render`
         0
@@ -208,8 +208,9 @@ tressa.async(function (done) {
   return tressa.async(function (done) {
     tressa.log('## hyperHTML.wire(object)');
     var point = {x: 1, y: 2};
+    let render = hyperHTML.wire();
     function update() {
-      return hyperHTML.wire(point)`
+      return render`
       <span style="${`
         position: absolute;
         left: ${point.x}px;
@@ -217,7 +218,6 @@ tressa.async(function (done) {
       `}">O</span>`;
     }
     tressa.assert(update() === update(), 'same output');
-    tressa.assert(hyperHTML.wire(point) === hyperHTML.wire(point), 'same wire');
     done();
   });
 })
@@ -261,7 +261,7 @@ tressa.async(function (done) {
       <section>
         <ul>${
           items.map(function (item, i) {
-            return hyperHTML.wire((listItems[i] || (listItems[i] = {})))`
+            return hyperHTML.html(i)`
             <li data-test="${i}">${item.text}</li>
             `;
           })
@@ -314,18 +314,6 @@ tressa.async(function (done) {
   tressa.assert(div.firstChild.firstChild === br, 'one child is kept');
   hyperHTML.bind(div)`<div>${[]}</div>`;
   tressa.assert(/<div><!--.+?--><\/div>/.test(div.innerHTML), 'dropped all children');
-})
-.then(function () {
-  tressa.log('## wire by id');
-  let ref = {};
-  let wires = {
-    a: hyperHTML.wire(ref, ':a')`<a></a>`,
-    p: hyperHTML.wire(ref, ':p')`<p></p>`
-  };
-  tressa.assert(wires.a.nodeName.toLowerCase() === 'a', '<a> is correct');
-  tressa.assert(wires.p.nodeName.toLowerCase() === 'p', '<p> is correct');
-  tressa.assert(hyperHTML.wire(ref, ':a')`<a></a>` === wires.a, 'same wire for <a>');
-  tressa.assert(hyperHTML.wire(ref, ':p')`<p></p>` === wires.p, 'same wire for <p>');
 })
 .then(function () {
   return tressa.async(function (done) {
@@ -417,7 +405,7 @@ tressa.async(function (done) {
   let svgContainer = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
   if (!('ownerSVGElement' in svgContainer)) svgContainer.ownerSVGElement = null;
   hyperHTML.bind(svgContainer)`<rect x="1" y="2" />`;
-  result = hyperHTML.wire(null, 'svg')`<svg></svg>`;
+  result = hyperHTML.wire('svg')`<svg></svg>`;
   tressa.assert(result.nodeName.toLowerCase() === 'svg', 'svg content is allowed too');
   result = hyperHTML.wire()``;
   tressa.assert(!result.innerHTML, 'empty content');
@@ -460,7 +448,7 @@ tressa.async(function (done) {
   ];
   hyperHTML.bind(div)`${
     employees.map(
-      employee => hyperHTML.wire(employee)`
+      employee => hyperHTML.wire()`
       <div>First name: ${employee.first}</div>
       <p></p>`
     )
@@ -469,7 +457,7 @@ tressa.async(function (done) {
   hyperHTML.bind(div)`
     <p></p>${
     employees.map(
-      employee => hyperHTML.wire(employee)`
+      employee => hyperHTML.wire()`
       <div>First name: ${employee.first}</div>
       <p></p>`
     )
@@ -624,7 +612,7 @@ tressa.async(function (done) {
   function update() {
     hyperHTML.bind(div)`<ul>
       ${todo.map(function (item) {
-        return hyperHTML.wire(item)
+        return hyperHTML.wire()
         `<li data-id=${item.id}>${item.text}</li>`;
       })}
     </ul>`;
