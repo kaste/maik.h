@@ -95,7 +95,7 @@ export const makeNodeSetter = nodeMarker => {
         return
     }
 
-    if (isNode_ish(value)) {
+    if (isNode(value)) {
       holder.setNodes(value)
       return
     }
@@ -131,7 +131,7 @@ export const makeNodeSetter = nodeMarker => {
             setValue(flatten(value))
             return
           }
-          if (isPromise_ish(value[0])) {
+          if (isPromise(value[0])) {
             Promise.all(value).then(setValue)
             return
           }
@@ -152,7 +152,7 @@ export const makeNodeSetter = nodeMarker => {
       return
     }
 
-    if (isPromise_ish(value)) {
+    if (isPromise(value)) {
       value.then(setValue)
     } else if ('html' in value) {
       holder.setHTML(value.html)
@@ -173,11 +173,11 @@ function invokeTransformer(value, setValue, nodeHolder) {
 }
 
 // quick and dirty Node check
-function isNode_ish(value) {
+function isNode(value) {
   return 'ELEMENT_NODE' in value
 }
 
 // quick and dirty Promise check
-function isPromise_ish(value) {
+function isPromise(value) {
   return 'then' in value
 }
