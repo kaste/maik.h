@@ -108,11 +108,10 @@ export const makeNodeSetter = nodeMarker => {
       return
     }
 
-    if ('length' in value) {
-      if (!isArray(value)) {
-        value = slice.call(value)
-      }
-
+    if (
+      isArray(value) ||
+      ('length' in value && (value = slice.call(value)))
+    ) {
       let length = value.length
 
       if (length === 0) {
