@@ -85,14 +85,14 @@ export const makeNodeSetter = nodeMarker => {
   let wires = Object.create(null)
 
   return function setValue(value) {
-    if (value == null) {
-      value = ''
-    }
-
     if (value === oldValue) {
       return
     }
     oldValue = value
+
+    if (value == null) {
+      value = []
+    }
 
     switch (typeof value) {
       case 'string':
