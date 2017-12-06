@@ -1,5 +1,5 @@
 import { createFragment, createText } from './dom-utils.js'
-import { Aura, optimist } from './aura.js'
+import domdiff from '../node_modules/domdiff/esm/index.js'
 import { isArray, slice, flatten } from './utils.js'
 import { TagInvocation } from './tag-invocation-type.js'
 import { materializer } from './maik.js'
@@ -15,9 +15,16 @@ export class NodeHolder {
   constructor(marker, managedNodes = []) {
     this._marker = marker
     this._managedNodes = managedNodes
+  }
 
-    let aura = new Aura(marker, managedNodes)
-    this._optimist = optimist.bind(null, aura, marker, managedNodes)
+  _optimist(nextNodes) {
+    this._managedNodes = domdiff(
+      this._marker.parentNode,
+      this._managedNodes,
+      nextNodes,
+      null,
+      this._marker
+    )
   }
 
   setText(value) {

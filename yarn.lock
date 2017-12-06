@@ -970,6 +970,10 @@ doctrine@^2.0.0:
     esutils "^2.0.2"
     isarray "^1.0.0"
 
+domdiff@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/domdiff/-/domdiff-0.2.0.tgz#b16ac9be9f20046824db665224e7e05b18bf22e1"
+
 ecc-jsbn@~0.1.1:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/ecc-jsbn/-/ecc-jsbn-0.1.1.tgz#0fc73a9ed5f0d53c38193398523ef7e543777505"
@@ -1688,10 +1692,6 @@ lru-cache@^4.0.1:
   dependencies:
     pseudomap "^1.0.2"
     yallist "^2.1.2"
-
-majinbuu@^2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/majinbuu/-/majinbuu-2.0.2.tgz#150e41fa698584b9d57cf782d840e780452c9b41"
 
 micromatch@^2.1.5:
   version "2.3.11"

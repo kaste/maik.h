@@ -43,6 +43,6 @@
     "uglify-es": "^3.1.5"
   },
   "dependencies": {
-    "majinbuu": "^2.0.2"
+    "domdiff": "^0.2.0"
   }
 }
