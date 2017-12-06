@@ -8,6 +8,7 @@ const COMMENT_NODE = 8
 
 // eslint-disable-next-line no-control-regex
 const EXTRACT_ATTRIBUTE_NAME = /\s([^\0-\x1F\x7F-\x9F \x09\x0a\x0c\x0d"'>=/]+)[ \x09\x0a\x0c\x0d]*=[ \x09\x0a\x0c\x0d]*['"]?$/
+const WHITESPACE_NODE_TEST = /^\n\s*$/
 
 /*
   Given the unique static strings of a template-tag invocation,
@@ -180,6 +181,8 @@ export const processFragment = (
     }
   }
 
+  nextNode()
+
   for (let i = 0, l = foundAttributes.length; i < l; i++) {
     let attribute = foundAttributes[i]
     let node = attribute.ownerElement
@@ -199,6 +202,8 @@ export const domWalker = (node, nodeMarker, marker) => {
 
   let attributes = null
   let attrIndex = 0
+
+  let whitespaceOnlyNodes = []
 
   return function next(typeHint) {
     while (true) {
@@ -234,14 +239,24 @@ export const domWalker = (node, nodeMarker, marker) => {
                 return [node, index]
               }
               continue
-            case TEXT_NODE:
-              if (node.nodeValue.indexOf(nodeMarker) !== -1) {
+            case TEXT_NODE: {
+              let nodeValue = node.nodeValue
+              if (WHITESPACE_NODE_TEST.test(nodeValue)) {
+                index--
+                whitespaceOnlyNodes.push(node)
+              } else if (nodeValue.indexOf(nodeMarker) !== -1) {
                 return [node, index]
               }
               continue
+            }
           }
         }
-        throw new Error('Could not find all placeholders.')
+
+        for (let i = 0, l = whitespaceOnlyNodes.length; i < l; i++) {
+          let node = whitespaceOnlyNodes[i]
+          node.parentNode.removeChild(node)
+        }
+        return
       }
     }
   }
