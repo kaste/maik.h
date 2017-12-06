@@ -1,7 +1,5 @@
-import { trim } from './utils.js'
+import { slice } from './utils.js'
 import { UIDC } from './UID.js'
-
-const ELEMENT_NODE = 1
 
 // entry point for all TL => DOM operations
 export function render(
@@ -31,19 +29,8 @@ export const replaceNodeContent = (node, fragment) => {
 
 // return a single node or an Array or nodes
 export const extractContent = node => {
-  let content = []
   let childNodes = node.childNodes
-
-  for (var i = 0, length = childNodes.length; i < length; i++) {
-    let child = childNodes[i]
-    if (
-      child.nodeType === ELEMENT_NODE ||
-      trim.call(child.textContent).length !== 0
-    ) {
-      content.push(child)
-    }
-  }
-  return content.length === 1 ? content[0] : content
+  return childNodes.length === 1 ? childNodes[0] : slice.call(childNodes)
 }
 
 // Both Firefox < 55 and TypeScript have issues with template literals.

@@ -76,6 +76,12 @@ describe('bind/render', () => {
     matchInnerHTML(`<p>Hello</p><p>friend!</p>`, div)
   })
 
+  it('handles leading and trailing text', () => {
+    let render = bind(div)
+    render`${1}<p>${2}</p>${3}<hr>${4}`
+    matchInnerHTML(`1<p>2</p>3<hr>4`, div)
+  })
+
   context('performance: ', () => {
     it('re-uses the same element on re-render', () => {
       let render = bind(div)
@@ -94,16 +100,46 @@ describe('bind/render', () => {
     })
   })
 
-  it('leaves whitespace as is', () => {
-    let render = bind(div)
-    render`<p> ${'foo'} ${'bar'} </p>`
-    matchInnerHTML(`<p> foo bar </p>`, div)
-  })
+  context('whitespace', () => {
+    it(`leaves 'normal' whitespace as is`, () => {
+      let render = bind(div)
+      render`<p> ${'foo'} ${'bar'} </p>`
+      matchInnerHTML(`<p> foo bar </p>`, div)
+    })
 
-  it('handles leading and trailing text', () => {
-    let render = bind(div)
-    render`${1}<p>${2}</p>${3}<hr>${4}`
-    matchInnerHTML(`1<p>2</p>3<hr>4`, div)
+    it('removes whitespace if it starts with a newline', () => {
+      let render = bind(div)
+      render`
+        <p>Hello</p>
+        <p>Friend</p>
+      `
+      matchInnerHTML('<p>Hello</p><p>Friend</p>', div)
+    })
+
+    it('wire returns a single node if possible', () => {
+      let render = wire()
+      let p = render`
+        <p>Hello</p>
+      `
+      assert.isNotArray(p)
+    })
+
+    it('wire returns an array if necessary', () => {
+      let render = wire()
+      let p = render`
+        <p>Hello</p> <p>Hello</p>
+      `
+      assert.isArray(p)
+    })
+
+    it(`wire does not remove 'normal' whitespace`, () => {
+      let render = wire()
+      let p = render`
+        <p>Hello</p> <p>Hello</p>
+      ` //          ^ Whitespace TEXT_NODE
+      //     1      2     3
+      assert.equal(p.length, 3)
+    })
   })
 
   context('edge cases', () => {
