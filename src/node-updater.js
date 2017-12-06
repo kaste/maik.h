@@ -56,11 +56,7 @@ export class NodeHolder {
   }
 
   appendNodes(value) {
-    if (!isArray(value)) {
-      value = [value]
-    }
-    let nodes = this._managedNodes.slice()
-    nodes.push(...value)
+    let nodes = this._managedNodes.concat(value)
     this._optimist(nodes)
   }
 
