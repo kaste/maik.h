@@ -181,6 +181,7 @@ export const processFragment = (
     }
   }
 
+  // Completely walk the DOM, and remove some whitespace nodes.
   nextNode()
 
   for (let i = 0, l = foundAttributes.length; i < l; i++) {
