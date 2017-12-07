@@ -30,18 +30,15 @@
 </head>
 <body>
   <nav><a href="examples/">Examples</a></nav>
-  <div id="first">
-    first
-  </div>
-  <div id="second">
-    second
-  </div>
+  <div id="first"></div>
+  <div id="second"></div>
   <pre id="source_code"></pre>
+
   <script id="script">
+    /* global Rx, maik */
     const TICK = 300
 
     let tick = Rx.Observable.interval(TICK).mapTo(1)
-    // let tick = Rx.Observable.interval(0, Rx.Scheduler.animationFrame).mapTo(1)
 
     let startStop = Rx.Observable
       .fromEvent(document, 'click')
@@ -49,9 +46,9 @@
       .scan(a => !a)
 
 
-    window.clock = startStop.switchMap(run => (run ? tick : Rx.Observable.never()))
+    let clock = startStop.switchMap(run => (run ? tick : Rx.Observable.never()))
 
-    window.makeCounter = clock =>
+    let makeCounter = clock =>
       clock
         .filter(x => x === 1)
         .scan(a => a + 1, -1)
