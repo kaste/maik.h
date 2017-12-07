@@ -1,5 +1,6 @@
 logo/*
 node_modules/*
+old_test/*
 .DS_Store
 .gitignore
 *.sublime-project
