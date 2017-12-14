@@ -1,6 +1,6 @@
 /* global chai */
 
-const {assert} = chai
+const { assert } = chai
 
 export const matchInnerHTML = (string, html) => {
   let container = html.cloneNode(true)
@@ -8,8 +8,13 @@ export const matchInnerHTML = (string, html) => {
   assert.equal(string, container.innerHTML)
 }
 
-export const removeComments = (node) => {
-  let walker = document.createTreeWalker(node, NodeFilter.SHOW_COMMENT)
+export const removeComments = node => {
+  let walker = document.createTreeWalker(
+    node,
+    NodeFilter.SHOW_COMMENT,
+    null,
+    false
+  )
   let commentNodes = []
 
   while (walker.nextNode()) {
