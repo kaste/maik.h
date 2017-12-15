@@ -1,7 +1,6 @@
 [![gzip size](http://img.badgesize.io/https://unpkg.com/maik.h/default-maik-bundle.min.js?compression=gzip)](https://unpkg.com/maik.h/default-maik-bundle.min.js)
 [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC)
 
-
 # maik.h
 
 HTML templating without the render loop.
@@ -19,7 +18,7 @@ Just play with it using true ESM modules:
 
 ```
 <script type="module">
-  import { bind } from 'https://unpkg.com/maik.h@latest/default-maik.js'
+  import { bind } from 'https://unpkg.com/maik.h/default-maik.js'
 
   let render = bind(document.body)
   render`<div>Hi, how are you?</div>`
@@ -29,7 +28,7 @@ Just play with it using true ESM modules:
 Or, old-school:
 
 ```
-<script src="https://unpkg.com/maik@latest/default-maik-bundle.js"></script>
+<script src="https://unpkg.com/maik.h/default-maik-bundle.js"></script>
 <script>
   let { bind } = maik
 
