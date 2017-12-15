@@ -970,9 +970,9 @@ doctrine@^2.0.0:
     esutils "^2.0.2"
     isarray "^1.0.0"
 
-domdiff@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/domdiff/-/domdiff-0.2.0.tgz#b16ac9be9f20046824db665224e7e05b18bf22e1"
+domdiff@^0.3.5:
+  version "0.3.5"
+  resolved "https://registry.yarnpkg.com/domdiff/-/domdiff-0.3.5.tgz#9217c7f07445427a83ef1a6ceab38d9180f06fb6"
 
 ecc-jsbn@~0.1.1:
   version "0.1.1"
