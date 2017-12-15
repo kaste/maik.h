@@ -1,5 +1,6 @@
+import { domdiff } from '../externals.js'
+
 import { createFragment, createText } from './dom-utils.js'
-import domdiff from '../node_modules/domdiff/esm/index.js'
 import { isArray, slice, flatten } from './utils.js'
 import { TagInvocation } from './tag-invocation-type.js'
 import { materializer } from './maik.js'

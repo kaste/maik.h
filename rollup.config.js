@@ -1,3 +1,5 @@
+import cdn from 'rollup-plugin-cdn'
+
 export default {
   input: 'default-maik-bundle.js',
   output: {
@@ -5,5 +7,5 @@ export default {
     format: 'iife',
     name: 'maik'
   },
-  plugins: []
+  plugins: [cdn()]
 }
