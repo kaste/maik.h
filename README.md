@@ -1,4 +1,6 @@
+[![gzip size](http://img.badgesize.io/https://unpkg.com/maik.h/default-maik-bundle.min.js?compression=gzip)](https://unpkg.com/maik.h/default-maik-bundle.min.js)
 [![License: ISC](https://img.shields.io/badge/License-ISC-yellow.svg)](https://opensource.org/licenses/ISC)
+
 
 # maik.h
 
