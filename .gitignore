@@ -1,11 +1,5 @@
 .DS_Store
 node_modules/
 dist/
-/default-maik.js
-/default-maik.min.js
-/index.js
-/index.mjs
-/min.js
-/min.mjs
-/minimal-rx.js
-/minimal-rx.min.js
+/default-maik-bundle.js
+/default-maik-bundle.min.js
